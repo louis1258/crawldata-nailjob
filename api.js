@@ -3,19 +3,17 @@ const fs = require('fs');
 const path = require('path');
 const FormData = require('form-data');
 
-// API endpoint for uploading the file
-const baseURL = 'http://77.237.236.3:9000/api/upload';
+const baseURL = 'http://localhost:3000/api/v1/upload';
 
 const upload = async (imageName, fileBuffer) => {
     const formData = new FormData();
-    formData.append('file', fileBuffer, imageName);  // Use the buffer directly and provide the filename
-    formData.append('type', 'comic_cover');
+    formData.append('file', fileBuffer, imageName);
 
     const config = {
         headers: {
-            'Content-Type': `multipart/form-data`,  // Axios handles the boundary automatically
-            'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Im1pbmhwaG9uZ2hwMjAwMyIsInVzZXJJZCI6IjY3NGYzMDJmODA4YzhlM2U3ZDI4YjM3MyIsImVtYWlsIjoibmd1eWVubmd1eWVuQGdtYWlsLmNvbSIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTczMzY1MjIwMSwiZXhwIjoxNzM2MjQ0MjAxfQ.5r8ho_errD2gYDios2EP4j7VkN5GXeFVj5fTdVL4pQE`,  // Token if required
-            ...formData.getHeaders(),  // Automatically set multipart headers
+            'Content-Type': `multipart/form-data`,
+            'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwaG9uZSI6MSwidXNlcklkIjoiNjgzMDRhOGJjNjA5ZjJkNzU0NDUwN2M3IiwiZW1haWwiOiJuZ2hpYUBnbWFpbC5jb20iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3NTI2NjEyNDAsImV4cCI6MTc1MjY4Mjg0MH0.GLZvAsD0bfPl_EF3Lw6EGYe90EPNF7-PWw7X25uiumA`,  // Token if required
+            ...formData.getHeaders(),
         },
     };
     try {
@@ -25,124 +23,77 @@ const upload = async (imageName, fileBuffer) => {
         const response = await instance.post(baseURL, formData, config);
         console.log('Image uploaded successfully:', response.data);
 
-        return response.data;  // Return the response data (e.g., URL of the uploaded image)
+        return response.data;
     } catch (error) {
         console.error('Error uploading image:', error);
-        throw error;  // Rethrow the error to handle it in the calling code
+        throw error;
     }
 };
 
-const COMIC_URL = 'http://77.237.236.3:9000/api/comics';
-const createComic = (comic) => {
-    const config = {
-        headers: {
-            'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Im1pbmhwaG9uZ2hwMjAwMyIsInVzZXJJZCI6IjY3NGYzMDJmODA4YzhlM2U3ZDI4YjM3MyIsImVtYWlsIjoibmd1eWVubmd1eWVuQGdtYWlsLmNvbSIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTczMzY1MjIwMSwiZXhwIjoxNzM2MjQ0MjAxfQ.5r8ho_errD2gYDios2EP4j7VkN5GXeFVj5fTdVL4pQE`,  // Add your token here if needed
-        },
-        timeout: 60000
+const STORE_URL = 'http://localhost:3000/api/v1/technician/store/crawl';
+
+const getRandomImageFromNailFolder = () => {
+    const nailFolderPath = path.join(__dirname, 'Nail');
+    const files = fs.readdirSync(nailFolderPath);
+    
+    const imageFiles = files.filter(file => {
+        const ext = path.extname(file).toLowerCase();
+        return ['.jpg', '.jpeg', '.png', '.webp'].includes(ext);
+    });
+    
+    if (imageFiles.length === 0) {
+        throw new Error('No image files found in Nail folder');
+    }
+    
+    // Select a random image
+    const randomIndex = Math.floor(Math.random() * imageFiles.length);
+    const selectedImage = imageFiles[randomIndex];
+    const imagePath = path.join(nailFolderPath, selectedImage);
+    
+    return {
+        imageName: selectedImage,
+        imageBuffer: fs.readFileSync(imagePath),
+        imagePath: imagePath  // Add image path for deletion
     };
+};
 
-    return axios.post(COMIC_URL, comic, config)
-        .then(response => {
-            return response.data;  // Trả về data từ response
-        })
-        .catch(error => {
-            console.error('Error uploading comic:', error);
-            throw error;  // Ném lỗi ra ngoài để xử lý ở nơi gọi hàm
-        });
+const createStore = async (store) => {
+    try {
+        const { imageName, imageBuffer, imagePath } = getRandomImageFromNailFolder();
+        
+        console.log(`Uploading image: ${imageName}`);
+        const uploadResponse = await upload(imageName, imageBuffer);
+        
+        try {
+            fs.unlinkSync(imagePath);
+            console.log(`Image deleted from Nail folder: ${imageName}`);
+        } catch (deleteError) {
+            console.error(`Error deleting image ${imageName}:`, deleteError);
+            // Don't throw error here, just log it since upload was successful
+        }
+        
+        // Add the image URL to the store payload
+        const storeWithImage = {
+            ...store,
+            image: [uploadResponse.data]
+        };
+        
+        console.log('Store payload with image:', storeWithImage);
+        
+        const config = {
+            headers: {
+                'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwaG9uZSI6MSwidXNlcklkIjoiNjgzMDRhOGJjNjA5ZjJkNzU0NDUwN2M3IiwiZW1haWwiOiJuZ2hpYUBnbWFpbC5jb20iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3NTI2NjEyNDAsImV4cCI6MTc1MjY4Mjg0MH0.GLZvAsD0bfPl_EF3Lw6EGYe90EPNF7-PWw7X25uiumA`,  // Add your token here if needed
+            },
+            timeout: 60000
+        };
 
-}
-
-
-const CHAPTER_URL = 'http://77.237.236.3:9000/api/chapters';
-const createChapter = (chapter) => {
-    const config = {
-        headers: {
-            'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Im1pbmhwaG9uZ2hwMjAwMyIsInVzZXJJZCI6IjY3NGYzMDJmODA4YzhlM2U3ZDI4YjM3MyIsImVtYWlsIjoibmd1eWVubmd1eWVuQGdtYWlsLmNvbSIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTczMzY1MjIwMSwiZXhwIjoxNzM2MjQ0MjAxfQ.5r8ho_errD2gYDios2EP4j7VkN5GXeFVj5fTdVL4pQE`
-        },
-        timeout: 60000
+        const response = await axios.post(STORE_URL, storeWithImage, config);
+        return response.data;
+        
+    } catch (error) {
+        console.error('Error in createStore:', error);
+        throw error; 
     }
-    return axios.post(CHAPTER_URL, chapter, config)
-    .then(response => {
-        return response.data;  // Trả về data từ response
-    })
-    .catch(error => {
-        console.error('Error uploading comic:', error);
-        throw error;  // Ném lỗi ra ngoài để xử lý ở nơi gọi hàm
-    });
-}
+};
 
-
-
-const COMICTYPE_URL = 'http://77.237.236.3:9000/api/comic-types/findName';
-const createComicType = (type) => {
-    const config = {
-        headers: {
-            'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Im1pbmhwaG9uZ2hwMjAwMyIsInVzZXJJZCI6IjY3NGYzMDJmODA4YzhlM2U3ZDI4YjM3MyIsImVtYWlsIjoibmd1eWVubmd1eWVuQGdtYWlsLmNvbSIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTczMzY1MjIwMSwiZXhwIjoxNzM2MjQ0MjAxfQ.5r8ho_errD2gYDios2EP4j7VkN5GXeFVj5fTdVL4pQE`
-        },
-        timeout: 60000
-    }
-    return axios.post(COMICTYPE_URL, type, config)
-    .then(response => {
-        return response.data;  // Trả về data từ response
-    })
-    .catch(error => {
-        console.error('Error create comic type :', error);
-        throw error;  // Ném lỗi ra ngoài để xử lý ở nơi gọi hàm
-    });
-}
-
-const COMIC_SLUG = 'http://77.237.236.3:9000/api/comics/check-slug';
-const checkSlug = (slug) => {
-    const config = {
-        headers: {
-            'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Im1pbmhwaG9uZ2hwMjAwMyIsInVzZXJJZCI6IjY3NGYzMDJmODA4YzhlM2U3ZDI4YjM3MyIsImVtYWlsIjoibmd1eWVubmd1eWVuQGdtYWlsLmNvbSIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTczMzY1MjIwMSwiZXhwIjoxNzM2MjQ0MjAxfQ.5r8ho_errD2gYDios2EP4j7VkN5GXeFVj5fTdVL4pQE`
-        },
-        timeout: 60000
-    }
-    return axios.get(`${COMIC_SLUG}?slug=${slug}`, config)
-    .then(response => {
-        return response.data;  // Trả về data từ response
-    })
-    .catch(error => {
-        console.error('Error create comic type :', error);
-        throw error;  // Ném lỗi ra ngoài để xử lý ở nơi gọi hàm
-    });
-}
-// Export the function using CommonJS
-
-const EXITS_CHAPTER = 'http://77.237.236.3:9000/api/chapters/order';
-checkChapter =  async(payload) =>{
-    const config = {
-        headers: {
-            'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Im1pbmhwaG9uZ2hwMjAwMyIsInVzZXJJZCI6IjY3NGYzMDJmODA4YzhlM2U3ZDI4YjM3MyIsImVtYWlsIjoibmd1eWVubmd1eWVuQGdtYWlsLmNvbSIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTczMzY1MjIwMSwiZXhwIjoxNzM2MjQ0MjAxfQ.5r8ho_errD2gYDios2EP4j7VkN5GXeFVj5fTdVL4pQE`
-        },
-        timeout: 60000
-    }
-    return axios.post(`${EXITS_CHAPTER}`, payload ,  config)
-    .then(response => {
-        return response.data;  // Trả về data từ response
-    })
-    .catch(error => {
-        console.error('Error create comic type :', error);
-        throw error;  // Ném lỗi ra ngoài để xử lý ở nơi gọi hàm
-    });
-}
-
-const ALL_COMICS = 'http://localhost:9000/api/comics';
-allComics =  async(payload) =>{
-    const config = {
-        headers: {
-            'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Im1pbmhwaG9uZ2hwMjAwMyIsInVzZXJJZCI6IjY3NGYzMDJmODA4YzhlM2U3ZDI4YjM3MyIsImVtYWlsIjoibmd1eWVubmd1eWVuQGdtYWlsLmNvbSIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTczMzY1MjIwMSwiZXhwIjoxNzM2MjQ0MjAxfQ.5r8ho_errD2gYDios2EP4j7VkN5GXeFVj5fTdVL4pQE`
-        },
-        timeout: 60000
-    }
-    return axios.get(`${ALL_COMICS}` ,  config)
-    .then(response => {
-        return response.data;  // Trả về data từ response
-    })
-    .catch(error => {
-        console.error('Error create comic type :', error);
-        throw error;  // Ném lỗi ra ngoài để xử lý ở nơi gọi hàm
-    });
-}
-module.exports = { upload, createComic,createChapter, createComicType,checkSlug , allComics};
+module.exports = { upload, createStore};
