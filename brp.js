@@ -1,7 +1,7 @@
 const { connect } = require('puppeteer-real-browser');
 const parseAddressInfo = require('./utils/parseAddressInfo');
 const TARGET_URL = 'https://baonail.com';
-const { createStore } = require('./api');
+const { createStore, checkStore } = require('./api');
 
 function delay(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
@@ -212,97 +212,115 @@ connect({
                         allUrls.push(...newUrls, ...newUrlsPage2, ...newUrlsPage3);
 
                         for (let href of newUrls) {
-                            try {
-                                if (browser) {
-                                    await browser.close();
-                                }
-                                
-                                const newProxy = getRandomProxy();
-                                console.log(`🔄 Switching to new proxy: ${newProxy.host}:${newProxy.port} for ${href}`);
-                                
-                                const newResponse = await createBrowserWithProxy(newProxy);
-                                browser = newResponse.browser;
-                                page = newResponse.page;
-                                
-                                const randomUserAgent = userAgents[Math.floor(Math.random() * userAgents.length)];
-                                await page.setUserAgent(randomUserAgent);
-                                await page.setExtraHTTPHeaders({
-                                    'Accept-Language': 'en-US,en;q=0.9',
-                                    'Referer': TARGET_URL,
-                                });
-                                await page.setViewport({
-                                    width: 1280,
-                                    height: 1080
-                                });
-                                
-                                await gotoWithRetry(page, href, 3);
-                                await delay(10000); 
+                            let success = false;
+                        
+                            for (let attempt = 1; attempt <= 3; attempt++) {
                                 try {
-                                    await page.click('div[id^="id"] a[href^="tel:"]');
+                                    if (browser) {
+                                        await browser.close();
+                                    }
+                        
+                                    const newProxy = getRandomProxy();
+                                    console.log(`🔄 Attempt ${attempt}: Switching to proxy ${newProxy.host}:${newProxy.port} for ${href}`);
+                        
+                                    const newResponse = await createBrowserWithProxy(newProxy);
+                                    browser = newResponse.browser;
+                                    page = newResponse.page;
+                        
+                                    const randomUserAgent = userAgents[Math.floor(Math.random() * userAgents.length)];
+                                    await page.setUserAgent(randomUserAgent);
+                                    await page.setExtraHTTPHeaders({
+                                        'Accept-Language': 'en-US,en;q=0.9',
+                                        'Referer': TARGET_URL,
+                                    });
+                                    await page.setViewport({
+                                        width: 1280,
+                                        height: 1080
+                                    });
+                        
+                                    await gotoWithRetry(page, href, 3);
+                                    await delay(10000);
+                                    let dataObj = {};
+                        
+                                    await page.waitForSelector('div[id^="id"] > div.ellipsis > b');
+                                    const name = await page.$eval('div[id^="id"] > div.ellipsis > b', el => el.textContent.trim());
+                                    dataObj['name'] = name ?? null;
+
+                                    const check = await checkStore(name);
+                                    if (check.data) {
+                                        console.log(`✅ Store ${name} already exists`);
+                                        break;
+                                    }
+                                    try {
+                                        await page.click('div[id^="id"] a[href^="tel:"]');
+                                    } catch (error) {
+                                        await page.click('div[id^="id"] a.contact_info');
+                                    }
+                        
+                                    await delay(2000);
+                        
+                                    await page.waitForSelector('div[id^="id"]', { timeout: 100000 });
+                        
+                                    let description;
+                                    try {
+                                        description = await page.$eval('div[id^="id"] > div[id^="ad_"]', el => el.textContent.trim());
+                                    } catch (error) {
+                                        description = await page.$eval('div[id^="id"] > div:first-child', el => el.textContent.trim());
+                                    }
+                                    dataObj['description'] = description?.replace('[Translate to English]', '').trim();
+                        
+                                    await delay(1000);
+                                    let phoneSelector;
+                                    try {
+                                        await page.waitForSelector('div[id^="id"] a[href^="tel:"]', { timeout: 5000 });
+                                        phoneSelector = 'div[id^="id"] a[href^="tel:"]';
+                                    } catch (error) {
+                                        await page.waitForSelector('div[id^="id"] a.contact_info');
+                                        phoneSelector = 'div[id^="id"] a.contact_info';
+                                    }
+                        
+                                    const addressText = await page.$eval(
+                                        'div[id^="id"] > div.ellipsis + div',
+                                        el => el.innerText.trim()
+                                    );
+                                    const parsed = parseAddressInfo(addressText);
+                        
+                                    dataObj['address'] = parsed.address;
+                                    dataObj['city'] = parsed.city ?? 'Cleveland';
+                                    dataObj['state'] = parsed.state ?? 'OH';
+                                    dataObj['zipcode'] = parsed.zipcode ?? '44113';
+                        
+                                    let phone;
+                                    if (phoneSelector.includes('tel:')) {
+                                        phone = await page.$eval(phoneSelector, el => el.textContent.trim());
+                                    } else {
+                                        const phoneRegex = /(\(?[0-9]{3}\)?[-.\s]?[0-9]{3}[-.\s]?[0-9]{4})/;
+                                        const phoneMatch = addressText.match(phoneRegex);
+                                        phone = phoneMatch ? phoneMatch[1] : "Contact via website";
+                                    }
+                        
+                                    dataObj['business_phone'] = phone ?? null;
+                                    dataObj['email'] = 'nailjob.us@gmail.com';
+                        
+                                    console.log(`✅ Data scraped (attempt ${attempt}) with proxy ${newProxy.host}:${newProxy.port}:`, dataObj);
+                                    await createStore(dataObj);
+                                    await delay(30000);
+                        
+                                    success = true;
+                                    break; 
+                        
                                 } catch (error) {
-                                    await page.click('div[id^="id"] a.contact_info');
+                                    console.error(`❗ Attempt ${attempt} failed for ${href}:`, error.message);
+                                    await delay(5000); 
                                 }
-                                await delay(2000); 
+                            }
                         
-                                let dataObj = {};
-                        
-                                await page.waitForSelector('div[id^="id"]', { timeout: 100000 });
-                                
-                                let description;
-                                try {
-                                    console.log('description')
-                                    description = await page.$eval('div[id^="id"] > div[id^="ad_"]', el => el.textContent.trim());
-                                } catch (error) {
-                                    console.log('description 2')
-                                    description = await page.$eval('div[id^="id"] > div:first-child', el => el.textContent.trim());
-                                }
-                                dataObj['description'] = description?.replace('[Translate to English]', '').trim();
-                                
-                                await page.waitForSelector('div[id^="id"] > div.ellipsis > b');
-                                const name = await page.$eval('div[id^="id"] > div.ellipsis > b', el => el.textContent.trim());
-                                dataObj['name'] = name ?? null;
-                        
-                                await delay(1000); 
-                                let phoneSelector;
-                                try {
-                                    await page.waitForSelector('div[id^="id"] a[href^="tel:"]', { timeout: 5000 });
-                                    phoneSelector = 'div[id^="id"] a[href^="tel:"]';
-                                } catch (error) {
-                                    await page.waitForSelector('div[id^="id"] a.contact_info');
-                                    phoneSelector = 'div[id^="id"] a.contact_info';
-                                }
-                                const addressText = await page.$eval(
-                                    'div[id^="id"] > div.ellipsis + div',
-                                    el => el.innerText.trim()
-                                  );
-                                console.log(addressText, 'address')
-                                const parsed = parseAddressInfo(addressText);
-                                console.log(parsed, 'parsed')
-                                dataObj['address'] = parsed.address;
-                                dataObj['city'] = parsed.city;
-                                dataObj['state'] = parsed.state;
-                                dataObj['zipcode'] = parsed.zipcode;
-                        
-                                let phone;
-                                if (phoneSelector.includes('tel:')) {
-                                    phone = await page.$eval(phoneSelector, el => el.textContent.trim());
-                                } else {
-                                    const phoneRegex = /(\(?[0-9]{3}\)?[-.\s]?[0-9]{3}[-.\s]?[0-9]{4})/;
-                                    const phoneMatch = addressText.match(phoneRegex);
-                                    phone = phoneMatch ? phoneMatch[1] : "Contact via website";
-                                }
-                                dataObj['business_phone'] = phone ?? null;
-                                dataObj['email'] = 'nailjob.us@gmail.com'
-                        
-                                console.log(`✅ Data scraped with proxy ${newProxy.host}:${newProxy.port}:`, dataObj);
-                                await createStore(dataObj);
-                                await delay(20000); 
-                        
-                            } catch (error) {
-                                console.error(`❗ Error crawling ${href}:`, error.message);
-                                continue; 
+                            if (!success) {
+                                console.warn(`⛔ Skipping ${href} after 3 failed attempts.`);
+                                continue;
                             }
                         }
+                        
                         
                     }
                 }

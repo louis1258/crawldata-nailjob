@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const FormData = require('form-data');
 
-const baseURL = 'http://localhost:3000/api/v1/upload';
+const baseURL = 'http://0.0.0.0:3000/api/v1/upload';
 
 const upload = async (imageName, fileBuffer) => {
     const formData = new FormData();
@@ -12,7 +12,7 @@ const upload = async (imageName, fileBuffer) => {
     const config = {
         headers: {
             'Content-Type': `multipart/form-data`,
-            'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwaG9uZSI6MSwidXNlcklkIjoiNjgzMDRhOGJjNjA5ZjJkNzU0NDUwN2M3IiwiZW1haWwiOiJuZ2hpYUBnbWFpbC5jb20iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3NTI2NjEyNDAsImV4cCI6MTc1MjY4Mjg0MH0.GLZvAsD0bfPl_EF3Lw6EGYe90EPNF7-PWw7X25uiumA`,  // Token if required
+            'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwaG9uZSI6MSwidXNlcklkIjoiNjgzMDRhOGJjNjA5ZjJkNzU0NDUwN2M3IiwiZW1haWwiOiJuZ2hpYUBnbWFpbC5jb20iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3NTI2ODQ2NjIsImV4cCI6MTc1MjY5MTg2Mn0.Ov5Y82NAhbwLNwzFx7Wkk-XAq-EOuG_2sgXBvSSMFdI`,  // Token if required
             ...formData.getHeaders(),
         },
     };
@@ -30,7 +30,7 @@ const upload = async (imageName, fileBuffer) => {
     }
 };
 
-const STORE_URL = 'http://localhost:3000/api/v1/technician/store/crawl';
+const STORE_URL = 'http://0.0.0.0:3000/api/v1/technician/store/crawl';
 
 const getRandomImageFromNailFolder = () => {
     const nailFolderPath = path.join(__dirname, 'Nail');
@@ -82,7 +82,7 @@ const createStore = async (store) => {
         
         const config = {
             headers: {
-                'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwaG9uZSI6MSwidXNlcklkIjoiNjgzMDRhOGJjNjA5ZjJkNzU0NDUwN2M3IiwiZW1haWwiOiJuZ2hpYUBnbWFpbC5jb20iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3NTI2NjEyNDAsImV4cCI6MTc1MjY4Mjg0MH0.GLZvAsD0bfPl_EF3Lw6EGYe90EPNF7-PWw7X25uiumA`,  // Add your token here if needed
+                'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwaG9uZSI6MSwidXNlcklkIjoiNjgzMDRhOGJjNjA5ZjJkNzU0NDUwN2M3IiwiZW1haWwiOiJuZ2hpYUBnbWFpbC5jb20iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3NTI2ODQ2NjIsImV4cCI6MTc1MjY5MTg2Mn0.Ov5Y82NAhbwLNwzFx7Wkk-XAq-EOuG_2sgXBvSSMFdI`,  // Add your token here if needed
             },
             timeout: 60000
         };
@@ -96,4 +96,14 @@ const createStore = async (store) => {
     }
 };
 
-module.exports = { upload, createStore};
+const checkStore = async (name) => {
+    const config = {
+        headers: {
+            'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwaG9uZSI6MSwidXNlcklkIjoiNjgzMDRhOGJjNjA5ZjJkNzU0NDUwN2M3IiwiZW1haWwiOiJuZ2hpYUBnbWFpbC5jb20iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3NTI2ODQ2NjIsImV4cCI6MTc1MjY5MTg2Mn0.Ov5Y82NAhbwLNwzFx7Wkk-XAq-EOuG_2sgXBvSSMFdI`,  // Add your token here if needed
+        },
+    };
+
+    const response = await axios.post('http://0.0.0.0:3000/api/v1/technician/store/check-name', {name}, config);
+    return response.data;
+};
+module.exports = { upload, createStore, checkStore};
