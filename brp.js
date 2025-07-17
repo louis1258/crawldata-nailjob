@@ -27,22 +27,10 @@ async function gotoWithRetry(page, url, maxRetries = 3) {
 }
 const proxies = [
     {
-        host: '51.79.185.150',
-        port: '8902',
-        username: 'vPoIinghia',
-        password: 'gD5vJdJj'
-    },
-    {
-        host: '103.207.36.217',
-        port: '8095',
-        username: 'GbO8knghia',
-        password: 'XJOLjllA'
-    },
-    {
         host: '139.99.36.55',
-        port: '8154',
-        username: '40RMJnghia',
-        password: 'If0LqZvU'
+        port: '8692',
+        username: 'rivl4nghia',
+        password: '4KQ4EXKD'
     },
 ];
 
@@ -52,7 +40,7 @@ function getRandomProxy() {
 
 async function createBrowserWithProxy(proxy) {
     return await connect({
-        headless: 'auto',
+        headless: 'true',
         customConfig: {},
         skipTarget: [],
         fingerprint: true,
@@ -108,7 +96,7 @@ async function uploadWithRetry(uploadFunction, uniqueFileName, readableStream, o
 
 let currentProxy = getRandomProxy();
 connect({
-    headless: 'auto',
+    headless: 'true',
     customConfig: {},
     skipTarget: [],
     fingerprint: true,
@@ -160,73 +148,80 @@ connect({
                 const randomUserAgent = userAgents[Math.floor(Math.random() * userAgents.length)];
                 await page.setUserAgent(randomUserAgent);
                 const pageUrl = `${TARGET_URL}/index.php?state=OH&stype=&stype=1`;
-                
+
                 while (true) {
                     await page.goto(pageUrl, { waitUntil: 'networkidle2' });
                     await delay(2000)
                     if (page) {
                         const allUrls = [];
+
                         const newUrls = await page.$$eval('#uuuuu > div', divs => {
                             return divs
                                 .map(div => {
                                     const aTag = div.querySelector('a');
                                     return aTag ? aTag.href : null;
                                 })
-                                .filter(href => 
-                                    href !== null && 
+                                .filter(href =>
+                                    href !== null &&
                                     !href.includes('func=banner&act=banners')
                                 );
                         });
                         allUrls.push(...newUrls);
+
                         await delay(5000);
                         await page.waitForSelector('#pageid2 > div > div > a', { timeout: 100000 });
-                        await page.click('#pageid2 > div > div > a')
+                        await page.click('#pageid2 > div > div > a');
+
+                        await delay(5000);
                         const newUrlsPage2 = await page.$$eval('#uuuuu > div', divs => {
                             return divs
                                 .map(div => {
                                     const aTag = div.querySelector('a');
                                     return aTag ? aTag.href : null;
                                 })
-                                .filter(href => 
-                                    href !== null && 
+                                .filter(href =>
+                                    href !== null &&
                                     !href.includes('func=banner&act=banners')
                                 );
                         });
-                        allUrls.push(...newUrls, ...newUrlsPage2);
-                        
+                        allUrls.push(...newUrlsPage2);
+
                         await delay(5000);
                         await page.waitForSelector('#pageid3 > div > div > a.btn.btn-default.pull-right', { timeout: 100000 });
-                        await page.click('#pageid3 > div > div > a.btn.btn-default.pull-right')
+                        await page.click('#pageid3 > div > div > a.btn.btn-default.pull-right');
+
+                        await delay(5000);
                         const newUrlsPage3 = await page.$$eval('#uuuuu > div', divs => {
                             return divs
                                 .map(div => {
                                     const aTag = div.querySelector('a');
                                     return aTag ? aTag.href : null;
                                 })
-                                .filter(href => 
-                                    href !== null && 
+                                .filter(href =>
+                                    href !== null &&
                                     !href.includes('func=banner&act=banners')
                                 );
                         });
+                        allUrls.push(...newUrlsPage3);
 
-                        allUrls.push(...newUrls, ...newUrlsPage2, ...newUrlsPage3);
-
-                        for (let href of newUrls) {
+                        console.log(allUrls.length)
+                        const CralUrl = allUrls.slice(60)
+                        for (let href of CralUrl) {
                             let success = false;
-                        
+
                             for (let attempt = 1; attempt <= 3; attempt++) {
                                 try {
                                     if (browser) {
                                         await browser.close();
                                     }
-                        
+
                                     const newProxy = getRandomProxy();
                                     console.log(`🔄 Attempt ${attempt}: Switching to proxy ${newProxy.host}:${newProxy.port} for ${href}`);
-                        
+
                                     const newResponse = await createBrowserWithProxy(newProxy);
                                     browser = newResponse.browser;
                                     page = newResponse.page;
-                        
+
                                     const randomUserAgent = userAgents[Math.floor(Math.random() * userAgents.length)];
                                     await page.setUserAgent(randomUserAgent);
                                     await page.setExtraHTTPHeaders({
@@ -237,11 +232,11 @@ connect({
                                         width: 1280,
                                         height: 1080
                                     });
-                        
+
                                     await gotoWithRetry(page, href, 3);
                                     await delay(10000);
                                     let dataObj = {};
-                        
+
                                     await page.waitForSelector('div[id^="id"] > div.ellipsis > b');
                                     const name = await page.$eval('div[id^="id"] > div.ellipsis > b', el => el.textContent.trim());
                                     dataObj['name'] = name ?? null;
@@ -256,11 +251,11 @@ connect({
                                     } catch (error) {
                                         await page.click('div[id^="id"] a.contact_info');
                                     }
-                        
+
                                     await delay(2000);
-                        
+
                                     await page.waitForSelector('div[id^="id"]', { timeout: 100000 });
-                        
+
                                     let description;
                                     try {
                                         description = await page.$eval('div[id^="id"] > div[id^="ad_"]', el => el.textContent.trim());
@@ -268,7 +263,7 @@ connect({
                                         description = await page.$eval('div[id^="id"] > div:first-child', el => el.textContent.trim());
                                     }
                                     dataObj['description'] = description?.replace('[Translate to English]', '').trim();
-                        
+
                                     await delay(1000);
                                     let phoneSelector;
                                     try {
@@ -278,18 +273,18 @@ connect({
                                         await page.waitForSelector('div[id^="id"] a.contact_info');
                                         phoneSelector = 'div[id^="id"] a.contact_info';
                                     }
-                        
+
                                     const addressText = await page.$eval(
                                         'div[id^="id"] > div.ellipsis + div',
                                         el => el.innerText.trim()
                                     );
                                     const parsed = parseAddressInfo(addressText);
-                        
+
                                     dataObj['address'] = parsed.address;
                                     dataObj['city'] = parsed.city ?? 'Cleveland';
                                     dataObj['state'] = parsed.state ?? 'OH';
                                     dataObj['zipcode'] = parsed.zipcode ?? '44113';
-                        
+
                                     let phone;
                                     if (phoneSelector.includes('tel:')) {
                                         phone = await page.$eval(phoneSelector, el => el.textContent.trim());
@@ -298,30 +293,30 @@ connect({
                                         const phoneMatch = addressText.match(phoneRegex);
                                         phone = phoneMatch ? phoneMatch[1] : "Contact via website";
                                     }
-                        
+
                                     dataObj['business_phone'] = phone ?? null;
                                     dataObj['email'] = 'nailjob.us@gmail.com';
-                        
+
                                     console.log(`✅ Data scraped (attempt ${attempt}) with proxy ${newProxy.host}:${newProxy.port}:`, dataObj);
                                     await createStore(dataObj);
                                     await delay(30000);
-                        
+
                                     success = true;
-                                    break; 
-                        
+                                    break;
+
                                 } catch (error) {
                                     console.error(`❗ Attempt ${attempt} failed for ${href}:`, error.message);
-                                    await delay(5000); 
+                                    await delay(5000);
                                 }
                             }
-                        
+
                             if (!success) {
                                 console.warn(`⛔ Skipping ${href} after 3 failed attempts.`);
                                 continue;
                             }
                         }
-                        
-                        
+
+
                     }
                 }
             }

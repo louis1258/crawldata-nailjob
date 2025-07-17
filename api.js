@@ -12,7 +12,7 @@ const upload = async (imageName, fileBuffer) => {
     const config = {
         headers: {
             'Content-Type': `multipart/form-data`,
-            'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwaG9uZSI6MSwidXNlcklkIjoiNjgzMDRhOGJjNjA5ZjJkNzU0NDUwN2M3IiwiZW1haWwiOiJuZ2hpYUBnbWFpbC5jb20iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3NTI2ODQ2NjIsImV4cCI6MTc1MjY5MTg2Mn0.Ov5Y82NAhbwLNwzFx7Wkk-XAq-EOuG_2sgXBvSSMFdI`,  // Token if required
+            'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwaG9uZSI6MSwidXNlcklkIjoiNjgzMDRhOGJjNjA5ZjJkNzU0NDUwN2M3IiwiZW1haWwiOiJuZ2hpYUBnbWFpbC5jb20iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3NTI3MzE0MzEsImV4cCI6MTc1MjczODYzMX0.XmrJGOt-63kS5MvWW4JkvO3EUe0xFxFk0rW8hzzUzHE`,  // Token if required
             ...formData.getHeaders(),
         },
     };
@@ -82,7 +82,7 @@ const createStore = async (store) => {
         
         const config = {
             headers: {
-                'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwaG9uZSI6MSwidXNlcklkIjoiNjgzMDRhOGJjNjA5ZjJkNzU0NDUwN2M3IiwiZW1haWwiOiJuZ2hpYUBnbWFpbC5jb20iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3NTI2ODQ2NjIsImV4cCI6MTc1MjY5MTg2Mn0.Ov5Y82NAhbwLNwzFx7Wkk-XAq-EOuG_2sgXBvSSMFdI`,  // Add your token here if needed
+                'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwaG9uZSI6MSwidXNlcklkIjoiNjgzMDRhOGJjNjA5ZjJkNzU0NDUwN2M3IiwiZW1haWwiOiJuZ2hpYUBnbWFpbC5jb20iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3NTI3MzE0MzEsImV4cCI6MTc1MjczODYzMX0.XmrJGOt-63kS5MvWW4JkvO3EUe0xFxFk0rW8hzzUzHE`,  // Add your token here if needed
             },
             timeout: 60000
         };
@@ -99,7 +99,7 @@ const createStore = async (store) => {
 const checkStore = async (name) => {
     const config = {
         headers: {
-            'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwaG9uZSI6MSwidXNlcklkIjoiNjgzMDRhOGJjNjA5ZjJkNzU0NDUwN2M3IiwiZW1haWwiOiJuZ2hpYUBnbWFpbC5jb20iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3NTI2ODQ2NjIsImV4cCI6MTc1MjY5MTg2Mn0.Ov5Y82NAhbwLNwzFx7Wkk-XAq-EOuG_2sgXBvSSMFdI`,  // Add your token here if needed
+            'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwaG9uZSI6MSwidXNlcklkIjoiNjgzMDRhOGJjNjA5ZjJkNzU0NDUwN2M3IiwiZW1haWwiOiJuZ2hpYUBnbWFpbC5jb20iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3NTI3MzE0MzEsImV4cCI6MTc1MjczODYzMX0.XmrJGOt-63kS5MvWW4JkvO3EUe0xFxFk0rW8hzzUzHE`,  // Add your token here if needed
         },
     };
 
