@@ -348,7 +348,7 @@ async function crawlState(page, stateCode, stateName) {
                         dataObj['business_phone'] = phone ?? null;
                         dataObj['email'] = 'nailjob.us@gmail.com';
 
-                        console.log(`✅ Data scraped (attempt ${attempt}) cho ${stateName} với proxy ${proxies[0].host}:${proxies[0].port}:`, dataObj);
+                        // console.log(`✅ Data scraped (attempt ${attempt}) cho ${stateName} với proxy ${proxies[0].host}:${proxies[0].port}:`, dataObj);
                         await createStore(dataObj);
                         await delay(30000);
 
