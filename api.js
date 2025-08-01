@@ -13,7 +13,7 @@ let refreshToken = null;
 // Login credentials
 const LOGIN_CREDENTIALS = {
     account: "nghia@gmail.com",
-    password: "1234567890"
+    password: "12345678"
 };
 
 /**
