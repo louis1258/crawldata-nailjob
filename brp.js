@@ -282,18 +282,18 @@ async function crawlState(page, stateCode, stateName) {
 
                 for (let attempt = 1; attempt <= 3; attempt++) {
                     try {
-                        const check = await checkStore(storeId);
-                        if (check.data) {
-                            console.log(`✅ Store ${storeName} đã tồn tại trong ${stateName}`);
-                            break;
-                        }
-
                         await gotoWithRetry(page, href, 3);
                         await delay(10000);
                         let dataObj = {};
 
                         await page.waitForSelector('div[id^="id"] > div.ellipsis > b');
                         const name = await page.$eval('div[id^="id"] > div.ellipsis > b', el => el.textContent.trim());
+                        const check = await checkStore(storeId, name);
+                        if (check.data) {
+                            console.log(`✅ Store ${storeName} đã tồn tại trong ${stateName}`);
+                            break;
+                        }
+
                         dataObj['name'] = name ?? null;
 
                         try {
@@ -334,7 +334,7 @@ async function crawlState(page, stateCode, stateName) {
                         dataObj['city'] = parsed.city ?? 'Unknown';
                         dataObj['state'] = stateName; 
                         dataObj['zipcode'] = parsed.zipcode ?? 'Unknown';
-                        dataObj['from_id'] = storeId;
+                        dataObj['from_id'] = storeId || "7777777"
 
                         let phone;
                         if (phoneSelector.includes('tel:')) {

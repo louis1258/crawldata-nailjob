@@ -185,11 +185,12 @@ const createStore = async (store) => {
     }
 };
 
-const checkStore = async (from_id) => {
+const checkStore = async (from_id, name) => {
     const instance = createAxiosInstance();
-    const response = await instance.post('http://0.0.0.0:3001/api/v1/technician/store/check-name', {from_id});
+    const response = await instance.post('http://0.0.0.0:3001/api/v1/technician/store/check-name', {from_id, name});
     return response.data;
 };
+
 module.exports = { 
     upload, 
     createStore, 
