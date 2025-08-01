@@ -1,7 +1,63 @@
 const { connect } = require('puppeteer-real-browser');
 const parseAddressInfo = require('./utils/parseAddressInfo');
+const { parseUrlInfo, getStoreId, getStoreName } = require('./utils/parseUrlInfo');
 const TARGET_URL = 'https://baonail.com';
 const { createStore, checkStore } = require('./api');
+
+const statesMap = new Map([
+  ['AL', 'Alabama'],
+  ['AK', 'Alaska'],
+  ['AZ', 'Arizona'],
+  ['AR', 'Arkansas'],
+  ['CA', 'California'],
+  ['CO', 'Colorado'],
+  ['CT', 'Connecticut'],
+  ['DE', 'Delaware'],
+  ['DC', 'Washington, Dc'],
+  ['FL', 'Florida'],
+  ['GA', 'Georgia'],
+  ['HI', 'Hawaii'],
+  ['ID', 'Idaho'],
+  ['IL', 'Illinois'],
+  ['IN', 'Indiana'],
+  ['IA', 'Iowa'],
+  ['KS', 'Kansas'],
+  ['KY', 'Kentucky'],
+  ['LA', 'Louisiana'],
+  ['ME', 'Maine'],
+  ['MD', 'Maryland'],
+  ['MA', 'Massachusetts'],
+  ['MI', 'Michigan'],
+  ['MN', 'Minnesota'],
+  ['MS', 'Mississippi'],
+  ['MO', 'Missouri'],
+  ['MT', 'Montana'],
+  ['NE', 'Nebraska'],
+  ['NV', 'Nevada'],
+  ['NH', 'New Hampshire'],
+  ['NJ', 'New Jersey'],
+  ['NM', 'New Mexico'],
+  ['NY', 'New York'],
+  ['NC', 'North Carolina'],
+  ['ND', 'North Dakota'],
+  ['OH', 'Ohio'],
+  ['OK', 'Oklahoma'],
+  ['OR', 'Oregon'],
+  ['PA', 'Pennsylvania'],
+  ['RI', 'Rhode Island'],
+  ['SC', 'South Carolina'],
+  ['SD', 'South Dakota'],
+  ['TN', 'Tennessee'],
+  ['TX', 'Texas'],
+  ['UT', 'Utah'],
+  ['VT', 'Vermont'],
+  ['VA', 'Virginia'],
+  ['WA', 'Washington'],
+  ['WV', 'West Virginia'],
+  ['WI', 'Wisconsin'],
+  ['WY', 'Wyoming'],
+  ['PR', 'Puerto Rico']
+]);
 
 function delay(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
@@ -25,78 +81,18 @@ async function gotoWithRetry(page, url, maxRetries = 3) {
         }
     }
 }
+
 const proxies = [
     {
-        host: '139.99.36.55',
-        port: '8692',
-        username: 'rivl4nghia',
-        password: '4KQ4EXKD'
+        host: '51.79.191.62',
+        port: '8205',
+        username: 'nghiaCSem6',
+        password: 'D0q3VrBe'
     },
 ];
 
-function getRandomProxy() {
-    return proxies[Math.floor(Math.random() * proxies.length)];
-}
-
-async function createBrowserWithProxy(proxy) {
-    return await connect({
-        headless: 'true',
-        customConfig: {},
-        skipTarget: [],
-        fingerprint: true,
-        turnstile: true,
-        connectOption: {},
-        tf: true,
-        args: ['--disable-web-security', '--disable-features=IsolateOrigins,site-per-process', '--disable-webgl', '--disable-gpu'],
-        proxy: proxy
-    });
-}
-
-async function fetchWithRetry(src, retries = 3) {
-    let attempt = 0;
-    while (attempt < retries) {
-        try {
-            const response = await fetch(src, {
-                headers: {
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.82 Safari/537.36',
-                    'Referer': 'https://goctruyentranhvui9.com/',
-                    'Accept': 'image/webp,*/*',
-                    'Cache-Control': 'no-cache',
-                    'Accept-Encoding': 'gzip, deflate, br'
-                }
-            });
-            if (!response.ok) {
-                throw new Error(`Failed to fetch: ${response.statusText}`);
-            }
-            return await response.arrayBuffer();
-        } catch (error) {
-            console.error(`Fetch attempt ${attempt + 1} failed: ${error.message}`);
-            attempt++;
-        }
-    }
-    throw new Error(`Failed to fetch ${src} after ${retries} attempts`);
-}
-
-async function uploadWithRetry(uploadFunction, uniqueFileName, readableStream, options, retries = 3, delay = 2000) {
-    for (let attempt = 1; attempt <= retries; attempt++) {
-        try {
-            const url = await uploadFunction(uniqueFileName, readableStream, options);
-            console.log(`Upload successful: ${url}`);
-            return url;
-        } catch (error) {
-            console.error(`Attempt ${attempt} failed for ${uniqueFileName}:`, error.message);
-            if (attempt === retries) {
-                throw new Error(`Failed to upload after ${retries} attempts: ${uniqueFileName}`);
-            }
-            console.log(`Retrying upload in ${delay}ms...`);
-            await new Promise((resolve) => setTimeout(resolve, delay));
-        }
-    }
-}
-
-let currentProxy = getRandomProxy();
 connect({
-    headless: 'true',
+    headless: 'auto',
     customConfig: {},
     skipTarget: [],
     fingerprint: true,
@@ -104,222 +100,51 @@ connect({
     connectOption: {},
     tf: true,
     args: ['--disable-web-security', '--disable-features=IsolateOrigins,site-per-process', '--disable-webgl', '--disable-gpu'],
-    proxy: currentProxy
+    proxy: proxies[0]
 })
     .then(async response => {
         let { browser, page } = response;
 
         try {
-            while (true) {
-                await page.goto(TARGET_URL)
-                await page.setUserAgent("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36")
-                await page.setExtraHTTPHeaders({
-                    'Accept-Language': 'en-US,en;q=0.9',
-                    'Referer': TARGET_URL,
-                });
-                await page.setViewport({
-                    width: 1280,
-                    height: 1080
-                })
+            for (const [stateCode, stateName] of statesMap) {
+                console.log(`\n🚀 Bắt đầu crawl bang: ${stateName} (${stateCode})`);
+                
+                try {
+                    await page.goto(TARGET_URL)
+                    await page.setUserAgent("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36")
+                    await page.setExtraHTTPHeaders({
+                        'Accept-Language': 'en-US,en;q=0.9',
+                        'Referer': TARGET_URL,
+                    });
+                    await page.setViewport({
+                        width: 1280,
+                        height: 1080
+                    })
 
-                const userAgents = [
-                    "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Mobile Safari/537.36",
-                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36",
-                    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36",
-                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36",
-                    "Mozilla/5.0 (X11; Ubuntu; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36",
-                    "Mozilla/5.0 (Macintosh; Intel Mac OS X 12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36",
-                    "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36",
-                    "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36",
-                    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36",
-                    "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36",
-                    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36",
-                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36",
-                    "Mozilla/5.0 (Macintosh; Intel Mac OS X 13_0_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
-                    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36",
-                    "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/106.0.0.0 Safari/537.36",
-                    "Mozilla/5.0 (Macintosh; Intel Mac OS X 12_3_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36",
-                    "Mozilla/5.0 (X11; Ubuntu; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36",
-                    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36",
-                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.0.0 Safari/537.36",
-                    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/101.0.0.0 Safari/537.36"
-                ];
-                const randomUserAgent = userAgents[Math.floor(Math.random() * userAgents.length)];
-                await page.setUserAgent(randomUserAgent);
-                const pageUrl = `${TARGET_URL}/index.php?state=OH&stype=&stype=1`;
-
-                while (true) {
-                    await page.goto(pageUrl, { waitUntil: 'networkidle2' });
-                    await delay(2000)
-                    if (page) {
-                        const allUrls = [];
-
-                        const newUrls = await page.$$eval('#uuuuu > div', divs => {
-                            return divs
-                                .map(div => {
-                                    const aTag = div.querySelector('a');
-                                    return aTag ? aTag.href : null;
-                                })
-                                .filter(href =>
-                                    href !== null &&
-                                    !href.includes('func=banner&act=banners')
-                                );
-                        });
-                        allUrls.push(...newUrls);
-
-                        await delay(5000);
-                        await page.waitForSelector('#pageid2 > div > div > a', { timeout: 100000 });
-                        await page.click('#pageid2 > div > div > a');
-
-                        await delay(5000);
-                        const newUrlsPage2 = await page.$$eval('#uuuuu > div', divs => {
-                            return divs
-                                .map(div => {
-                                    const aTag = div.querySelector('a');
-                                    return aTag ? aTag.href : null;
-                                })
-                                .filter(href =>
-                                    href !== null &&
-                                    !href.includes('func=banner&act=banners')
-                                );
-                        });
-                        allUrls.push(...newUrlsPage2);
-
-                        await delay(5000);
-                        await page.waitForSelector('#pageid3 > div > div > a.btn.btn-default.pull-right', { timeout: 100000 });
-                        await page.click('#pageid3 > div > div > a.btn.btn-default.pull-right');
-
-                        await delay(5000);
-                        const newUrlsPage3 = await page.$$eval('#uuuuu > div', divs => {
-                            return divs
-                                .map(div => {
-                                    const aTag = div.querySelector('a');
-                                    return aTag ? aTag.href : null;
-                                })
-                                .filter(href =>
-                                    href !== null &&
-                                    !href.includes('func=banner&act=banners')
-                                );
-                        });
-                        allUrls.push(...newUrlsPage3);
-
-                        console.log(allUrls.length)
-                        const CralUrl = allUrls.slice(60)
-                        for (let href of CralUrl) {
-                            let success = false;
-
-                            for (let attempt = 1; attempt <= 3; attempt++) {
-                                try {
-                                    if (browser) {
-                                        await browser.close();
-                                    }
-
-                                    const newProxy = getRandomProxy();
-                                    console.log(`🔄 Attempt ${attempt}: Switching to proxy ${newProxy.host}:${newProxy.port} for ${href}`);
-
-                                    const newResponse = await createBrowserWithProxy(newProxy);
-                                    browser = newResponse.browser;
-                                    page = newResponse.page;
-
-                                    const randomUserAgent = userAgents[Math.floor(Math.random() * userAgents.length)];
-                                    await page.setUserAgent(randomUserAgent);
-                                    await page.setExtraHTTPHeaders({
-                                        'Accept-Language': 'en-US,en;q=0.9',
-                                        'Referer': TARGET_URL,
-                                    });
-                                    await page.setViewport({
-                                        width: 1280,
-                                        height: 1080
-                                    });
-
-                                    await gotoWithRetry(page, href, 3);
-                                    await delay(10000);
-                                    let dataObj = {};
-
-                                    await page.waitForSelector('div[id^="id"] > div.ellipsis > b');
-                                    const name = await page.$eval('div[id^="id"] > div.ellipsis > b', el => el.textContent.trim());
-                                    dataObj['name'] = name ?? null;
-
-                                    const check = await checkStore(name);
-                                    if (check.data) {
-                                        console.log(`✅ Store ${name} already exists`);
-                                        break;
-                                    }
-                                    try {
-                                        await page.click('div[id^="id"] a[href^="tel:"]');
-                                    } catch (error) {
-                                        await page.click('div[id^="id"] a.contact_info');
-                                    }
-
-                                    await delay(2000);
-
-                                    await page.waitForSelector('div[id^="id"]', { timeout: 100000 });
-
-                                    let description;
-                                    try {
-                                        description = await page.$eval('div[id^="id"] > div[id^="ad_"]', el => el.textContent.trim());
-                                    } catch (error) {
-                                        description = await page.$eval('div[id^="id"] > div:first-child', el => el.textContent.trim());
-                                    }
-                                    dataObj['description'] = description?.replace('[Translate to English]', '').trim();
-
-                                    await delay(1000);
-                                    let phoneSelector;
-                                    try {
-                                        await page.waitForSelector('div[id^="id"] a[href^="tel:"]', { timeout: 5000 });
-                                        phoneSelector = 'div[id^="id"] a[href^="tel:"]';
-                                    } catch (error) {
-                                        await page.waitForSelector('div[id^="id"] a.contact_info');
-                                        phoneSelector = 'div[id^="id"] a.contact_info';
-                                    }
-
-                                    const addressText = await page.$eval(
-                                        'div[id^="id"] > div.ellipsis + div',
-                                        el => el.innerText.trim()
-                                    );
-                                    const parsed = parseAddressInfo(addressText);
-
-                                    dataObj['address'] = parsed.address;
-                                    dataObj['city'] = parsed.city ?? 'Cleveland';
-                                    dataObj['state'] = parsed.state ?? 'OH';
-                                    dataObj['zipcode'] = parsed.zipcode ?? '44113';
-
-                                    let phone;
-                                    if (phoneSelector.includes('tel:')) {
-                                        phone = await page.$eval(phoneSelector, el => el.textContent.trim());
-                                    } else {
-                                        const phoneRegex = /(\(?[0-9]{3}\)?[-.\s]?[0-9]{3}[-.\s]?[0-9]{4})/;
-                                        const phoneMatch = addressText.match(phoneRegex);
-                                        phone = phoneMatch ? phoneMatch[1] : "Contact via website";
-                                    }
-
-                                    dataObj['business_phone'] = phone ?? null;
-                                    dataObj['email'] = 'nailjob.us@gmail.com';
-
-                                    console.log(`✅ Data scraped (attempt ${attempt}) with proxy ${newProxy.host}:${newProxy.port}:`, dataObj);
-                                    await createStore(dataObj);
-                                    await delay(30000);
-
-                                    success = true;
-                                    break;
-
-                                } catch (error) {
-                                    console.error(`❗ Attempt ${attempt} failed for ${href}:`, error.message);
-                                    await delay(5000);
-                                }
-                            }
-
-                            if (!success) {
-                                console.warn(`⛔ Skipping ${href} after 3 failed attempts.`);
-                                continue;
-                            }
-                        }
-
-
-                    }
+                    const userAgents = [
+                        "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Mobile Safari/537.36",
+                        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36",
+                        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36",
+                        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36",
+                        "Mozilla/5.0 (X11; Ubuntu; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36",
+                        "Mozilla/5.0 (Macintosh; Intel Mac OS X 12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36",
+                        "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36",
+                    ];
+                    const randomUserAgent = userAgents[Math.floor(Math.random() * userAgents.length)];
+                    await page.setUserAgent(randomUserAgent);
+                    
+                    await crawlState(page, stateCode, stateName);
+                    
+                    console.log(`⏳ Đợi 60 giây trước khi chuyển sang bang tiếp theo...`);
+                    await delay(60000);
+                    
+                } catch (error) {
+                    console.error(`❌ Lỗi khi xử lý bang ${stateName}:`, error);
+                    continue;
                 }
             }
+            
+            console.log(`🎉 Đã hoàn thành crawl tất cả các bang!`);
         } catch (error) {
             console.error(`Error during scraping:`, error);
         }
@@ -332,3 +157,217 @@ connect({
     .catch(error => {
         console.log(error.message)
     })
+
+async function getUrlsFromPage(page, pageNumber = 1) {
+    const newUrls = await page.$$eval('#uuuuu > div', divs => {
+        return divs
+            .map(div => {
+                const aTag = div.querySelector('a');
+                return aTag ? aTag.href : null;
+            })
+            .filter(href =>
+                href !== null &&
+                !href.includes('func=banner&act=banners')
+                && !href.includes('qc')
+            );
+    });
+    return newUrls;
+}
+
+async function getTotalPages(page) {
+    try {
+        const paginationButtons = await page.$$eval('div[id^="pageid"] > div > div > a', buttons => {
+            return buttons.map(button => {
+                const text = button.textContent.trim();
+                const pageNumber = parseInt(text);
+                return isNaN(pageNumber) ? null : pageNumber;
+            }).filter(num => num !== null);
+        });
+        
+        return Math.max(...paginationButtons, 1);
+    } catch (error) {
+        console.log('Không thể xác định số trang, mặc định là 1 trang');
+        return 1;
+    }
+}
+
+async function navigateToPage(page, pageNumber) {
+    if (pageNumber === 1) {
+        return;
+    }
+    
+    try {
+        const selectors = [
+            `#pageid${pageNumber} > div > div > a`,
+            `#pageid${pageNumber} > div > div > a.btn.btn-default.pull-right`,
+            `a[href*="page=${pageNumber}"]`,
+            `a[onclick*="page=${pageNumber}"]`
+        ];
+        
+        let clicked = false;
+        for (const selector of selectors) {
+            try {
+                await page.waitForSelector(selector, { timeout: 10000 });
+                await page.click(selector);
+                clicked = true;
+                console.log(`✅ Đã chuyển đến trang ${pageNumber} với selector: ${selector}`);
+                break;
+            } catch (error) {
+                console.log(`❌ Không thể click với selector: ${selector}`);
+                continue;
+            }
+        }
+        
+        if (!clicked) {
+            console.log(`⚠️ Không thể chuyển đến trang ${pageNumber}`);
+        }
+        
+        await delay(5000);
+    } catch (error) {
+        console.error(`Lỗi khi chuyển đến trang ${pageNumber}:`, error);
+    }
+}
+
+async function getAllUrlsFromAllPages(page) {
+    const allUrls = [];
+    
+    const totalPages = await getTotalPages(page);
+    console.log(`📄 Tổng số trang phát hiện được: ${totalPages}`);
+    
+    for (let pageNumber = 1; pageNumber <= totalPages; pageNumber++) {
+        console.log(`🔄 Đang xử lý trang ${pageNumber}/${totalPages}`);
+        
+        await navigateToPage(page, pageNumber);
+        
+        const pageUrls = await getUrlsFromPage(page, pageNumber);
+        allUrls.push(...pageUrls);
+        
+        console.log(`✅ Đã lấy được ${pageUrls.length} URLs từ trang ${pageNumber}`);
+        
+        if (pageNumber < totalPages) {
+            await delay(3000);
+        }
+    }
+    
+    console.log(`🎉 Tổng cộng đã lấy được ${allUrls.length} URLs từ ${totalPages} trang`);
+    return allUrls;
+}
+
+async function crawlState(page, stateCode, stateName) {
+    console.log(`\n🌍 Bắt đầu crawl bang: ${stateName} (${stateCode})`);
+    
+    const pageUrl = `${TARGET_URL}/index.php?state=${stateCode}&stype=&stype=1`;
+    console.log(`🔗 URL: ${pageUrl}`);
+    
+    try {
+        await page.goto(pageUrl, { waitUntil: 'networkidle2' });
+        await delay(2000);
+        
+        if (page) {
+            const allUrls = await getAllUrlsFromAllPages(page);
+            console.log(`📊 Tổng số URLs tìm thấy cho ${stateName}: ${allUrls.length}`);
+            
+            if (allUrls.length === 0) {
+                console.log(`⚠️ Không tìm thấy URLs nào cho bang ${stateName}`);
+                return;
+            }
+            
+            for (let href of allUrls) {
+                let success = false;
+                
+                const storeId = getStoreId(href);
+                const storeName = getStoreName(href);
+                
+                console.log(`\n🏪 Processing: ${storeName || 'Unknown'} (ID: ${storeId || 'N/A'}) - ${stateName}`);
+
+                for (let attempt = 1; attempt <= 3; attempt++) {
+                    try {
+                        const check = await checkStore(storeId);
+                        if (check.data) {
+                            console.log(`✅ Store ${storeName} đã tồn tại trong ${stateName}`);
+                            break;
+                        }
+
+                        await gotoWithRetry(page, href, 3);
+                        await delay(10000);
+                        let dataObj = {};
+
+                        await page.waitForSelector('div[id^="id"] > div.ellipsis > b');
+                        const name = await page.$eval('div[id^="id"] > div.ellipsis > b', el => el.textContent.trim());
+                        dataObj['name'] = name ?? null;
+
+                        try {
+                            await page.click('div[id^="id"] a[href^="tel:"]');
+                        } catch (error) {
+                            await page.click('div[id^="id"] a.contact_info');
+                        }
+
+                        await delay(2000);
+
+                        await page.waitForSelector('div[id^="id"]', { timeout: 100000 });
+
+                        let description;
+                        try {
+                            description = await page.$eval('div[id^="id"] > div[id^="ad_"]', el => el.textContent.trim());
+                        } catch (error) {
+                            description = await page.$eval('div[id^="id"] > div:first-child', el => el.textContent.trim());
+                        }
+                        dataObj['description'] = description?.replace('[Translate to English]', '').trim();
+
+                        await delay(1000);
+                        let phoneSelector;
+                        try {
+                            await page.waitForSelector('div[id^="id"] a[href^="tel:"]', { timeout: 5000 });
+                            phoneSelector = 'div[id^="id"] a[href^="tel:"]';
+                        } catch (error) {
+                            await page.waitForSelector('div[id^="id"] a.contact_info');
+                            phoneSelector = 'div[id^="id"] a.contact_info';
+                        }
+
+                        const addressText = await page.$eval(
+                            'div[id^="id"] > div.ellipsis + div',
+                            el => el.innerText.trim()
+                        );
+                        const parsed = parseAddressInfo(addressText);
+
+                        dataObj['address'] = parsed.address;
+                        dataObj['city'] = parsed.city ?? 'Unknown';
+                        dataObj['state'] = stateName; 
+                        dataObj['zipcode'] = parsed.zipcode ?? 'Unknown';
+                        dataObj['from_id'] = storeId;
+
+                        let phone;
+                        if (phoneSelector.includes('tel:')) {
+                            phone = await page.$eval(phoneSelector, el => el.textContent.trim());
+                        } else {
+                            const phoneRegex = /(\(?[0-9]{3}\)?[-.\s]?[0-9]{3}[-.\s]?[0-9]{4})/;
+                            const phoneMatch = addressText.match(phoneRegex);
+                            phone = phoneMatch ? phoneMatch[1] : "Contact via website";
+                        }
+
+                        dataObj['business_phone'] = phone ?? null;
+                        dataObj['email'] = 'nailjob.us@gmail.com';
+
+                        console.log(`✅ Data scraped (attempt ${attempt}) cho ${stateName} với proxy ${proxies[0].host}:${proxies[0].port}:`, dataObj);
+                        await createStore(dataObj);
+                        await delay(30000);
+
+                        success = true;
+                        break;
+
+                    } catch (error) {
+                        console.error(`❗ Attempt ${attempt} failed cho ${href} trong ${stateName}:`, error.message);
+                        await delay(5000);
+                    }
+                }
+
+                if (!success) {
+                    console.warn(`⛔ Skipping ${href} sau 3 lần thử thất bại trong ${stateName}.`);
+                    continue;
+                }
+            }
+        }
+    } catch (error) {
+        console.error(`❌ Lỗi khi crawl bang ${stateName}:`, error);
+    }
+}

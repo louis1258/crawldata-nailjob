@@ -3,7 +3,110 @@ const fs = require('fs');
 const path = require('path');
 const FormData = require('form-data');
 
-const baseURL = 'http://0.0.0.0:3000/api/v1/upload';
+const baseURL = 'http://0.0.0.0:3001/api/v1/upload';
+const AUTH_URL = 'http://0.0.0.0:3001/api/v1/auth/sign_in';
+
+// Token management
+let currentToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwaG9uZSI6MSwidXNlcklkIjoiNjgzMDRhOGJjNjA5ZjJkNzU0NDUwN2M3IiwiZW1haWwiOiJuZ2hpYUBnbWFpbC5jb20iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3NTQwMzgxMzEsImV4cCI6MTc1NDA0NTMzMX0.Z1qkY5IyZWKs5f6jryFnsWhywPck9iogLqvF3F53YHA';
+let refreshToken = null;
+
+// Login credentials
+const LOGIN_CREDENTIALS = {
+    account: "nghia@gmail.com",
+    password: "1234567890"
+};
+
+/**
+ * Đăng nhập để lấy token mới
+ */
+const login = async () => {
+    try {
+        console.log('🔄 Đang đăng nhập để lấy token mới...');
+        
+        const response = await axios.post(AUTH_URL, LOGIN_CREDENTIALS, {
+            timeout: 30000,
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (response.data.statusCode === 201 && response.data.data.token) {
+            currentToken = response.data.data.token.accessToken;
+            refreshToken = response.data.data.token.refreshToken;
+            
+            console.log('✅ Đăng nhập thành công, token đã được cập nhật');
+            console.log(`👤 User: ${response.data.data.user.email} (${response.data.data.user.role})`);
+            
+            return currentToken;
+        } else {
+            throw new Error('Login response format invalid');
+        }
+    } catch (error) {
+        console.error('❌ Lỗi khi đăng nhập:', error.response?.data || error.message);
+        throw error;
+    }
+};
+
+/**
+ * Lấy token hiện tại, tự động refresh nếu cần
+ */
+const getValidToken = async () => {
+    return currentToken;
+};
+
+/**
+ * Tạo axios instance với interceptor để tự động refresh token
+ */
+const createAxiosInstance = () => {
+    const instance = axios.create({
+        timeout: 1000000
+    });
+
+    // Request interceptor để thêm token
+    instance.interceptors.request.use(
+        async (config) => {
+            const token = await getValidToken();
+            if (token) {
+                config.headers.Authorization = `Bearer ${token}`;
+            }
+            return config;
+        },
+        (error) => {
+            return Promise.reject(error);
+        }
+    );
+
+    // Response interceptor để xử lý token expired
+    instance.interceptors.response.use(
+        (response) => {
+            return response;
+        },
+        async (error) => {
+            const originalRequest = error.config;
+
+            // Nếu lỗi 401 (Unauthorized) và chưa retry
+            if (error.response?.status === 401 && !originalRequest._retry) {
+                originalRequest._retry = true;
+
+                try {
+                    console.log('🔄 Token hết hạn, đang refresh...');
+                    await login();
+                    
+                    // Retry request với token mới
+                    originalRequest.headers.Authorization = `Bearer ${currentToken}`;
+                    return instance(originalRequest);
+                } catch (refreshError) {
+                    console.error('❌ Không thể refresh token:', refreshError.message);
+                    return Promise.reject(refreshError);
+                }
+            }
+
+            return Promise.reject(error);
+        }
+    );
+
+    return instance;
+};
 
 const upload = async (imageName, fileBuffer) => {
     const formData = new FormData();
@@ -12,14 +115,12 @@ const upload = async (imageName, fileBuffer) => {
     const config = {
         headers: {
             'Content-Type': `multipart/form-data`,
-            'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwaG9uZSI6MSwidXNlcklkIjoiNjgzMDRhOGJjNjA5ZjJkNzU0NDUwN2M3IiwiZW1haWwiOiJuZ2hpYUBnbWFpbC5jb20iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3NTI3MzE0MzEsImV4cCI6MTc1MjczODYzMX0.XmrJGOt-63kS5MvWW4JkvO3EUe0xFxFk0rW8hzzUzHE`,  // Token if required
             ...formData.getHeaders(),
         },
     };
+    
     try {
-        const instance = axios.create({
-            timeout: 1000000
-          });
+        const instance = createAxiosInstance();
         const response = await instance.post(baseURL, formData, config);
         console.log('Image uploaded successfully:', response.data);
 
@@ -30,7 +131,7 @@ const upload = async (imageName, fileBuffer) => {
     }
 };
 
-const STORE_URL = 'http://0.0.0.0:3000/api/v1/technician/store/crawl';
+const STORE_URL = 'http://0.0.0.0:3001/api/v1/technician/store/crawl';
 
 const getRandomImageFromNailFolder = () => {
     const nailFolderPath = path.join(__dirname, 'Nail');
@@ -64,15 +165,6 @@ const createStore = async (store) => {
         console.log(`Uploading image: ${imageName}`);
         const uploadResponse = await upload(imageName, imageBuffer);
         
-        try {
-            fs.unlinkSync(imagePath);
-            console.log(`Image deleted from Nail folder: ${imageName}`);
-        } catch (deleteError) {
-            console.error(`Error deleting image ${imageName}:`, deleteError);
-            // Don't throw error here, just log it since upload was successful
-        }
-        
-        // Add the image URL to the store payload
         const storeWithImage = {
             ...store,
             image: [uploadResponse.data]
@@ -80,14 +172,11 @@ const createStore = async (store) => {
         
         console.log('Store payload with image:', storeWithImage);
         
-        const config = {
-            headers: {
-                'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwaG9uZSI6MSwidXNlcklkIjoiNjgzMDRhOGJjNjA5ZjJkNzU0NDUwN2M3IiwiZW1haWwiOiJuZ2hpYUBnbWFpbC5jb20iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3NTI3MzE0MzEsImV4cCI6MTc1MjczODYzMX0.XmrJGOt-63kS5MvWW4JkvO3EUe0xFxFk0rW8hzzUzHE`,  // Add your token here if needed
-            },
+        const instance = createAxiosInstance();
+        const response = await instance.post(STORE_URL, storeWithImage, {
             timeout: 60000
-        };
-
-        const response = await axios.post(STORE_URL, storeWithImage, config);
+        });
+        
         return response.data;
         
     } catch (error) {
@@ -96,14 +185,16 @@ const createStore = async (store) => {
     }
 };
 
-const checkStore = async (name) => {
-    const config = {
-        headers: {
-            'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwaG9uZSI6MSwidXNlcklkIjoiNjgzMDRhOGJjNjA5ZjJkNzU0NDUwN2M3IiwiZW1haWwiOiJuZ2hpYUBnbWFpbC5jb20iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3NTI3MzE0MzEsImV4cCI6MTc1MjczODYzMX0.XmrJGOt-63kS5MvWW4JkvO3EUe0xFxFk0rW8hzzUzHE`,  // Add your token here if needed
-        },
-    };
-
-    const response = await axios.post('http://0.0.0.0:3000/api/v1/technician/store/check-name', {name}, config);
+const checkStore = async (from_id) => {
+    const instance = createAxiosInstance();
+    const response = await instance.post('http://0.0.0.0:3001/api/v1/technician/store/check-name', {from_id});
     return response.data;
 };
-module.exports = { upload, createStore, checkStore};
+module.exports = { 
+    upload, 
+    createStore, 
+    checkStore, 
+    login, 
+    createAxiosInstance,
+    getValidToken 
+};
