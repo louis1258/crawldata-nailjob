@@ -7,10 +7,10 @@ const baseURL = 'http://0.0.0.0:3001/api/v1/upload';
 const AUTH_URL = 'http://0.0.0.0:3001/api/v1/auth/sign_in';
 
 // Token management
-let currentToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwaG9uZSI6MSwidXNlcklkIjoiNjgzMDRhOGJjNjA5ZjJkNzU0NDUwN2M3IiwiZW1haWwiOiJuZ2hpYUBnbWFpbC5jb20iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3NTQwMzgxMzEsImV4cCI6MTc1NDA0NTMzMX0.Z1qkY5IyZWKs5f6jryFnsWhywPck9iogLqvF3F53YHA';
+let currentToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwaG9uZSI6MSwidXNlcklkIjoiNjgzZGJiYWE4YTk1NjA2NWVlZmExMzJkIiwiZW1haWwiOiJuZ2hpYUBnbWFpbC5jb20iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3NTQwNDQ3OTgsImV4cCI6MTc1NDA2Mjc5OH0.Hno_vrPIoA9fKqoNIi8Wlmjscl9vqW5zb1r89wLAqpw';
 let refreshToken = null;
 
-// Login credentials
+// Login credentials 
 const LOGIN_CREDENTIALS = {
     account: "nghia@gmail.com",
     password: "12345678"
