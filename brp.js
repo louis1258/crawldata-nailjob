@@ -163,9 +163,9 @@ async function crawlSingleUrl(page, href, stateName) {
             dataObj['name'] = name ?? null;
 
             try {
-                await page.click('div[id^="id"] a[href^="tel:"]');
-            } catch (error) {
                 await page.click('div[id^="id"] a.contact_info');
+            } catch (error) {
+                await page.click('div[id^="id"] a[href^="tel:"]');
             }
 
             await delay(8000);
@@ -197,9 +197,9 @@ async function crawlSingleUrl(page, href, stateName) {
             const parsed = parseAddressInfo(addressText);
 
             dataObj['address'] = parsed.address;
-            dataObj['city'] = parsed.city ?? 'Unknown';
+            dataObj['city'] = parsed.city ?? '';
             dataObj['state'] = stateName; 
-            dataObj['zipcode'] = parsed.zipcode ?? 'Unknown';
+            dataObj['zipcode'] = parsed.zipcode ?? '';
             dataObj['from_id'] = storeId || "7777777"
 
             let phone;

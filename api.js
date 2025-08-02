@@ -3,8 +3,8 @@ const fs = require('fs');
 const path = require('path');
 const FormData = require('form-data');
 
-const baseURL = 'http://0.0.0.0:3001/api/v1/upload';
-const AUTH_URL = 'http://0.0.0.0:3001/api/v1/auth/sign_in';
+const baseURL = 'https://api.staging.nailjob.us/api/v1/upload';
+const AUTH_URL = 'https://api.staging.nailjob.us/api/v1/auth/sign_in';
 
 // Token management
 let currentToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwaG9uZSI6MSwidXNlcklkIjoiNjgzZGJiYWE4YTk1NjA2NWVlZmExMzJkIiwiZW1haWwiOiJuZ2hpYUBnbWFpbC5jb20iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3NTQxMTMyOTksImV4cCI6MTc1NDEzMTI5OX0.VJWGuPX2R9c80d9We6uFxS6yrvQ2dyB8S02wnBo16l4';
@@ -24,7 +24,7 @@ const login = async () => {
         console.log('🔄 Đang đăng nhập để lấy token mới...');
         
         const response = await axios.post(AUTH_URL, LOGIN_CREDENTIALS, {
-            timeout: 30010,
+            timeout: 30000,
             headers: {
                 'Content-Type': 'application/json'
             }
@@ -131,7 +131,7 @@ const upload = async (imageName, fileBuffer) => {
     }
 };
 
-const STORE_URL = 'http://0.0.0.0:3001/api/v1/technician/store/crawl';
+const STORE_URL = 'https://api.staging.nailjob.us/api/v1/technician/store/crawl';
 
 const getRandomImageFromNailFolder = () => {
     const nailFolderPath = path.join(__dirname, 'Nail');
@@ -187,7 +187,7 @@ const createStore = async (store) => {
 
 const checkStore = async (from_id, name) => {
     const instance = createAxiosInstance();
-    const response = await instance.post('http://0.0.0.0:3001/api/v1/technician/store/check-name', {from_id, name});
+    const response = await instance.post('https://api.staging.nailjob.us/api/v1/technician/store/check-name', {from_id, name});
     return response.data;
 };
 
