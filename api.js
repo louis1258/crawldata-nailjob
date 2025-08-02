@@ -7,7 +7,7 @@ const baseURL = 'https://api.staging.nailjob.us/api/v1/upload';
 const AUTH_URL = 'https://api.staging.nailjob.us/api/v1/auth/sign_in';
 
 // Token management
-let currentToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwaG9uZSI6MSwidXNlcklkIjoiNjgzZGJiYWE4YTk1NjA2NWVlZmExMzJkIiwiZW1haWwiOiJuZ2hpYUBnbWFpbC5jb20iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3NTQxMTMyOTksImV4cCI6MTc1NDEzMTI5OX0.VJWGuPX2R9c80d9We6uFxS6yrvQ2dyB8S02wnBo16l4';
+let currentToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwaG9uZSI6MSwidXNlcklkIjoiNjgzZGJiYWE4YTk1NjA2NWVlZmExMzJkIiwiZW1haWwiOiJuZ2hpYUBnbWFpbC5jb20iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3NTQxMzkzNTgsImV4cCI6MTc1NDE1NzM1OH0.ycKPJEhVjiM9jnPJLVJ5anAJWVIv2B3XIVlheUax15U';
 let refreshToken = null;
 
 // Login credentials 
