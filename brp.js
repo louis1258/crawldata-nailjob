@@ -276,9 +276,9 @@ async function crawlStateUrls(page, stateCode, stateName) {
 const proxies = [
     {
         host: '51.79.191.62',
-        port: '8205',
-        username: 'nghiaCSem6',
-        password: 'D0q3VrBe'
+        port: '8631',
+        username: 'nghiaXju1S',
+        password: 'syqcGVUb'
     },
 ];
 
