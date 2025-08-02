@@ -164,13 +164,17 @@ async function crawlSingleUrl(page, href, stateName) {
 
             try {
                 await page.click('div[id^="id"] a.contact_info');
+                await page.waitForSelector('div[id^="id"] a.contact_info', {
+                    visible: true,
+                    timeout: 10000
+                });
             } catch (error) {
+                console.log('❌ Không tìm thấy contact_info, thử click trực tiếp tel:', error.message);
                 await page.click('div[id^="id"] a[href^="tel:"]');
             }
+            
 
-            await delay(8000);
-
-            await page.waitForSelector('div[id^="id"]', { timeout: 100000 });
+            await delay(10000);
 
             let description;
             try {
@@ -183,11 +187,11 @@ async function crawlSingleUrl(page, href, stateName) {
             await delay(2000);
             let phoneSelector;
             try {
-                await page.waitForSelector('div[id^="id"] a[href^="tel:"]', { timeout: 5000 });
-                phoneSelector = 'div[id^="id"] a[href^="tel:"]';
-            } catch (error) {
                 await page.waitForSelector('div[id^="id"] a.contact_info');
                 phoneSelector = 'div[id^="id"] a.contact_info';
+            } catch (error) {
+                await page.waitForSelector('div[id^="id"] a[href^="tel:"]', { timeout: 5000 });
+                phoneSelector = 'div[id^="id"] a[href^="tel:"]';
             }
 
             const addressText = await page.$eval(
