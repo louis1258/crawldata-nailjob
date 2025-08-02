@@ -1,7 +1,6 @@
 const { connect } = require('puppeteer-real-browser');
 const parseAddressInfo = require('./utils/parseAddressInfo');
 const { parseUrlInfo, getStoreId, getStoreName } = require('./utils/parseUrlInfo');
-const TARGET_URL = 'https://baonail.com';
 const { createStore, checkStore } = require('./api');
 const fs = require('fs');
 const path = require('path');
@@ -84,27 +83,6 @@ async function gotoWithRetry(page, url, maxRetries = 3) {
     }
 }
 
-// Hàm lưu URLs vào file
-const saveUrlsToFile = (stateCode, urls) => {
-    const dataDir = path.join(__dirname, 'data');
-    if (!fs.existsSync(dataDir)) {
-        fs.mkdirSync(dataDir, { recursive: true });
-    }
-    
-    const filePath = path.join(dataDir, `${stateCode}_urls.json`);
-    const data = {
-        stateCode,
-        stateName: statesMap.get(stateCode),
-        totalUrls: urls.length,
-        urls: urls,
-        timestamp: new Date().toISOString()
-    };
-    
-    fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
-    console.log(`💾 Đã lưu ${urls.length} URLs cho ${stateCode} vào file: ${filePath}`);
-    return filePath;
-};
-
 // Hàm đọc URLs từ file
 const loadUrlsFromFile = (stateCode) => {
     const filePath = path.join(__dirname, 'data', `${stateCode}_urls.json`);
@@ -115,29 +93,6 @@ const loadUrlsFromFile = (stateCode) => {
     }
     return null;
 };
-
-// Hàm lấy tất cả URLs của một state
-async function getAllUrlsForState(page, stateCode, stateName) {
-    console.log(`\n🔍 Bắt đầu lấy URLs cho bang: ${stateName} (${stateCode})`);
-    
-    const pageUrl = `${TARGET_URL}/index.php?state=${stateCode}&stype=&stype=1`;
-    console.log(`🔗 URL: ${pageUrl}`);
-    
-    try {
-        await page.goto(pageUrl, { waitUntil: 'networkidle2' });
-        await delay(2000);
-        
-        const allUrls = await getAllUrlsFromAllPages(page);
-        console.log(`📊 Tổng số URLs tìm thấy cho ${stateName}: ${allUrls.length}`);
-        
-        saveUrlsToFile(stateCode, allUrls);
-        
-        return allUrls;
-    } catch (error) {
-        console.error(`❌ Lỗi khi lấy URLs cho bang ${stateName}:`, error);
-        return [];
-    }
-}
 
 // Hàm crawl một URL cụ thể
 async function crawlSingleUrl(page, href, stateName) {
@@ -234,16 +189,11 @@ async function crawlSingleUrl(page, href, stateName) {
 async function crawlStateUrls(page, stateCode, stateName) {
     console.log(`\n🌍 Bắt đầu crawl URLs cho bang: ${stateName} (${stateCode})`);
     
-    // Kiểm tra xem có file URLs đã lưu chưa
-    let urls = loadUrlsFromFile(stateCode);
+    // Đọc URLs từ file
+    const urls = loadUrlsFromFile(stateCode);
     
-    if (!urls) {
-        console.log(`📥 Không tìm thấy file URLs cho ${stateCode}, sẽ lấy URLs mới...`);
-        urls = await getAllUrlsForState(page, stateCode, stateName);
-    }
-    
-    if (urls.length === 0) {
-        console.log(`⚠️ Không có URLs nào để crawl cho bang ${stateName}`);
+    if (!urls || urls.length === 0) {
+        console.log(`⚠️ Không tìm thấy URLs nào cho bang ${stateName}`);
         return;
     }
     
@@ -275,26 +225,20 @@ async function crawlStateUrls(page, stateCode, stateName) {
     console.log(`📊 Tổng cộng: ${urls.length}`);
 }
 
-const proxies = [
-    {
-        host: '51.79.191.62',
-        port: '8205',
-        username: 'nghiaCSem6',
-        password: 'D0q3VrBe'
-    },
-];
-
-connect({
-    headless: 'auto',
-    customConfig: {},
-    skipTarget: [],
-    fingerprint: true,
-    turnstile: true,
-    connectOption: {},
-    tf: true,
-    args: ['--disable-web-security', '--disable-features=IsolateOrigins,site-per-process', '--disable-webgl', '--disable-gpu'],
-    proxy: proxies[0]
-})
+// Main function
+async function crawlFromUrls() {
+    console.log('🚀 Bắt đầu crawl từ URLs đã lưu...');
+    
+    connect({
+        headless: 'true',
+        customConfig: {},
+        skipTarget: [],
+        fingerprint: true,
+        turnstile: true,
+        connectOption: {},
+        tf: true,
+        args: ['--disable-web-security', '--disable-features=IsolateOrigins,site-per-process', '--disable-webgl', '--disable-gpu'],
+    })
     .then(async response => {
         let { browser, page } = response;
 
@@ -303,11 +247,11 @@ connect({
                 console.log(`\n🚀 Bắt đầu crawl bang: ${stateName} (${stateCode})`);
                 
                 try {
-                    await page.goto(TARGET_URL)
+                    await page.goto('https://baonail.com')
                     await page.setUserAgent("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36")
                     await page.setExtraHTTPHeaders({
                         'Accept-Language': 'en-US,en;q=0.9',
-                        'Referer': TARGET_URL,
+                        'Referer': 'https://baonail.com',
                     });
                     await page.setViewport({
                         width: 1280,
@@ -350,122 +294,7 @@ connect({
     .catch(error => {
         console.log(error.message)
     })
-
-async function getUrlsFromPage(page, pageNumber = 1) {
-    const newUrls = await page.$$eval('#uuuuu > div', divs => {
-        return divs
-            .map(div => {
-                const aTag = div.querySelector('a');
-                return aTag ? aTag.href : null;
-            })
-            .filter(href =>
-                href !== null &&
-                !href.includes('func=banner')
-                && !href.includes('qc')
-            );
-    });
-    return newUrls;
 }
 
-async function getAllUrlsFromAllPages(page) {
-    const allUrls = [];
-    let currentPage = 1;
-    let hasMorePages = true;
-    let maxPages = 10; // Giới hạn tối đa 10 trang để tránh vòng lặp vô hạn
-    let consecutiveEmptyPages = 0; // Đếm số trang liên tiếp không có dữ liệu mới
-    
-    console.log(`🔄 Bắt đầu thu thập URLs từ tất cả trang...`);
-    
-    while (hasMorePages && currentPage <= maxPages) {
-        console.log(`🔄 Đang xử lý trang ${currentPage}`);
-        
-        // Lấy URLs từ trang hiện tại
-        const pageUrls = await getUrlsFromPage(page, currentPage);
-        
-        // Kiểm tra xem có URLs mới không
-        const newUrls = pageUrls.filter(url => !allUrls.includes(url));
-        
-        if (newUrls.length === 0) {
-            consecutiveEmptyPages++;
-            console.log(`⚠️ Trang ${currentPage} không có URLs mới (${consecutiveEmptyPages} trang liên tiếp)`);
-            
-            if (consecutiveEmptyPages >= 2) {
-                console.log(`⚠️ Đã có ${consecutiveEmptyPages} trang liên tiếp không có dữ liệu mới, dừng thu thập`);
-                hasMorePages = false;
-                break;
-            }
-        } else {
-            consecutiveEmptyPages = 0; // Reset counter
-            allUrls.push(...newUrls);
-            console.log(`✅ Đã lấy được ${newUrls.length} URLs mới từ trang ${currentPage} (tổng: ${allUrls.length})`);
-        }
-        
-        // Kiểm tra xem có trang tiếp theo không
-        const nextPageExists = await checkNextPageExists(page, currentPage);
-        
-        if (nextPageExists) {
-            // Chuyển đến trang tiếp theo
-            const navigationSuccess = await navigateToNextPage(page, currentPage);
-            if (navigationSuccess) {
-                currentPage++;
-                await delay(3000); // Đợi trang load
-            } else {
-                console.log(`⚠️ Không thể chuyển đến trang ${currentPage + 1}, dừng thu thập`);
-                hasMorePages = false;
-            }
-        } else {
-            console.log(`✅ Đã đến trang cuối (trang ${currentPage})`);
-            hasMorePages = false;
-        }
-    }
-    
-    if (currentPage > maxPages) {
-        console.log(`⚠️ Đã đạt giới hạn ${maxPages} trang, dừng thu thập`);
-    }
-    
-    console.log(`🎉 Tổng cộng đã lấy được ${allUrls.length} URLs từ ${currentPage} trang`);
-    return allUrls;
-}
-
-async function checkNextPageExists(page, currentPage) {
-    try {
-        await delay(2000);
-
-        const nextButton = await page.$('a[rel="next"]');
-
-        if (nextButton) {
-            const nextUrl = await page.evaluate(el => el.href, nextButton);
-            console.log('Next page URL:', nextUrl);
-            console.log(`✅ Tìm thấy Next button ở trang ${currentPage} với selector linh hoạt`);
-            return true;
-        } else {
-            console.log(`❌ Không tìm thấy nút next ở trang ${currentPage}`);
-            return false;
-        }
-
-    } catch (error) {
-        console.log(`❌ Lỗi khi kiểm tra trang tiếp theo: ${error.message}`);
-        return false;
-    }
-}
-
-
-// Hàm chuyển đến trang tiếp theo
-async function navigateToNextPage(page, currentPage) {
-    try {
-        console.log(`🔄 Đang chuyển từ trang ${currentPage} đến trang ${currentPage + 1}...`);
-        
-        const nextUrl = await page.$eval('a[rel="next"]', el => el.href);
-        console.log('Next page URL:', nextUrl);
-        await page.goto(nextUrl, { waitUntil: 'networkidle2' });
-        await delay(3000);
-        if (nextUrl) {
-            return true;
-        }
-        return false;
-        
-    } catch (error) {
-        console.log(`❌ Lỗi khi chuyển trang: ${error.message}`);
-        return false;
-    }
-}
+// Chạy script
+crawlFromUrls(); 

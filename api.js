@@ -3,8 +3,8 @@ const fs = require('fs');
 const path = require('path');
 const FormData = require('form-data');
 
-const baseURL = 'http://0.0.0.0:3001/api/v1/upload';
-const AUTH_URL = 'http://0.0.0.0:3001/api/v1/auth/sign_in';
+const baseURL = 'http://0.0.0.0:3000/api/v1/upload';
+const AUTH_URL = 'http://0.0.0.0:3000/api/v1/auth/sign_in';
 
 // Token management
 let currentToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwaG9uZSI6MSwidXNlcklkIjoiNjgzZGJiYWE4YTk1NjA2NWVlZmExMzJkIiwiZW1haWwiOiJuZ2hpYUBnbWFpbC5jb20iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3NTQwNDQ3OTgsImV4cCI6MTc1NDA2Mjc5OH0.Hno_vrPIoA9fKqoNIi8Wlmjscl9vqW5zb1r89wLAqpw';
@@ -13,7 +13,7 @@ let refreshToken = null;
 // Login credentials 
 const LOGIN_CREDENTIALS = {
     account: "nghia@gmail.com",
-    password: "12345678"
+    password: "1234567890"
 };
 
 /**
@@ -131,7 +131,7 @@ const upload = async (imageName, fileBuffer) => {
     }
 };
 
-const STORE_URL = 'http://0.0.0.0:3001/api/v1/technician/store/crawl';
+const STORE_URL = 'http://0.0.0.0:3000/api/v1/technician/store/crawl';
 
 const getRandomImageFromNailFolder = () => {
     const nailFolderPath = path.join(__dirname, 'Nail');
@@ -187,7 +187,7 @@ const createStore = async (store) => {
 
 const checkStore = async (from_id, name) => {
     const instance = createAxiosInstance();
-    const response = await instance.post('http://0.0.0.0:3001/api/v1/technician/store/check-name', {from_id, name});
+    const response = await instance.post('http://0.0.0.0:3000/api/v1/technician/store/check-name', {from_id, name});
     return response.data;
 };
 
