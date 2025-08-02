@@ -168,7 +168,7 @@ async function crawlSingleUrl(page, href, stateName) {
                 await page.click('div[id^="id"] a.contact_info');
             }
 
-            await delay(2000);
+            await delay(8000);
 
             await page.waitForSelector('div[id^="id"]', { timeout: 100000 });
 
