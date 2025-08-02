@@ -197,9 +197,9 @@ async function crawlSingleUrl(page, href, stateName) {
             const parsed = parseAddressInfo(addressText);
 
             dataObj['address'] = parsed.address;
-            dataObj['city'] = parsed.city ?? '';
+            dataObj['city'] = parsed.city ?? 'N/A';
             dataObj['state'] = stateName; 
-            dataObj['zipcode'] = parsed.zipcode ?? '';
+            dataObj['zipcode'] = parsed.zipcode ?? 'N/A';
             dataObj['from_id'] = storeId || "7777777"
 
             let phone;
