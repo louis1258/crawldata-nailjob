@@ -180,7 +180,7 @@ async function crawlSingleUrl(page, href, stateName) {
             }
             dataObj['description'] = description?.replace('[Translate to English]', '').trim();
 
-            await delay(1000);
+            await delay(2000);
             let phoneSelector;
             try {
                 await page.waitForSelector('div[id^="id"] a[href^="tel:"]', { timeout: 5000 });
