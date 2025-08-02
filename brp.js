@@ -203,15 +203,9 @@ async function crawlSingleUrl(page, href, stateName) {
             dataObj['from_id'] = storeId || "7777777"
 
             let phone;
-            if (phoneSelector.includes('tel:')) {
-                phone = await page.$eval(phoneSelector, el => el.textContent.trim());
-            } else {
-                const phoneRegex = /(\(?[0-9]{3}\)?[-.\s]?[0-9]{3}[-.\s]?[0-9]{4})/;
-                const phoneMatch = addressText.match(phoneRegex);
-                phone = phoneMatch ? phoneMatch[1] : "Contact via website";
-            }
+            phone = await page.$eval(phoneSelector, el => el.textContent.trim());
 
-            dataObj['business_phone'] = phone ?? null;
+            dataObj['business_phone'] = phone ?? 'Contact via website';
             dataObj['email'] = 'nailjob.us@gmail.com';
 
             console.log(`✅ Data scraped (attempt ${attempt}) cho ${stateName}:`, dataObj);
