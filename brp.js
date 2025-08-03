@@ -448,7 +448,7 @@ connect({
         '--disable-gpu',
         '--no-sandbox',
     ],
-    // proxy: proxies[0]
+    proxy: proxies[0]
 })
     .then(async response => {
         let { browser, page } = response;
