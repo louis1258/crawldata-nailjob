@@ -191,19 +191,6 @@ async function crawlSingleUrl(browser, href, stateName) {
                 
                 let dataObj = {};
 
-                // Đợi selector với timeout dài hơn
-                try {
-                    await page.waitForSelector('div[id^="id"] > div.ellipsis > b', { timeout: 30000 });
-                } catch (error) {
-                    console.log(`⚠️ Không tìm thấy selector name, thử selector khác...`);
-                    // Thử các selector khác
-                    try {
-                        await page.waitForSelector('div[id^="id"] b', { timeout: 15000 });
-                    } catch (error2) {
-                        console.log(`❌ Không tìm thấy tên store, bỏ qua URL này`);
-                        return false;
-                    }
-                }
 
                 let name;
                 try {
@@ -461,7 +448,7 @@ connect({
         '--disable-gpu',
         '--no-sandbox',
     ],
-    proxy: proxies[0]
+    // proxy: proxies[0]
 })
     .then(async response => {
         let { browser, page } = response;
