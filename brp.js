@@ -10,14 +10,14 @@ const statesMap = new Map([
     ['IL', 'Illinois'],
     ['AR', 'Arkansas'],
     ['AZ', 'Arizona'],
-  ['AL', 'Alabama'],
-  ['AK', 'Alaska'],
-  ['CA', 'California'],
-  ['CO', 'Colorado'],
-  ['CT', 'Connecticut'],
-  ['DE', 'Delaware'],
-  ['DC', 'Washington, Dc'],
-  ['FL', 'Florida'],
+    ['AL', 'Alabama'],
+    ['AK', 'Alaska'],
+    ['CA', 'California'],
+    ['CO', 'Colorado'],
+    ['CT', 'Connecticut'],
+    ['DE', 'Delaware'],
+    ['DC', 'Washington, Dc'],
+    ['FL', 'Florida'],
   ['GA', 'Georgia'],
   ['HI', 'Hawaii'],
   ['ID', 'Idaho'],
@@ -148,104 +148,132 @@ async function getAllUrlsForState(page, stateCode, stateName) {
 }
 
 // Hàm crawl một URL cụ thể
-async function crawlSingleUrl(page, href, stateName) {
+async function crawlSingleUrl(browser, href, stateName) {
     const storeId = getStoreId(href);
     const storeName = getStoreName(href);
     
     console.log(`\n🏪 Processing: ${storeName || 'Unknown'} (ID: ${storeId || 'N/A'}) - ${stateName}`);
 
-    for (let attempt = 1; attempt <= 3; attempt++) {
-        try {
-            await gotoWithRetry(page, href, 3);
-            await delay(10000);
-            let dataObj = {};
+    // Tạo page mới cho mỗi URL
+    const page = await browser.newPage();
+    
+    try {
+        // Thiết lập user agent và headers cho page mới
+        const userAgents = [
+            "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Mobile Safari/537.36",
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36",
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36",
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36",
+            "Mozilla/5.0 (X11; Ubuntu; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36",
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36",
+            "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36",
+        ];
+        const randomUserAgent = userAgents[Math.floor(Math.random() * userAgents.length)];
+        await page.setUserAgent(randomUserAgent);
+        await page.setExtraHTTPHeaders({
+            'Accept-Language': 'en-US,en;q=0.9',
+            'Referer': TARGET_URL,
+        });
+        await page.setViewport({
+            width: 1280,
+            height: 1080
+        });
 
-            await page.waitForSelector('div[id^="id"] > div.ellipsis > b');
-            const name = await page.$eval('div[id^="id"] > div.ellipsis > b', el => el.textContent.trim());
-            const check = await checkStore(storeId, name);
-            if (check.data) {
-                console.log(`✅ Store ${storeName} đã tồn tại trong ${stateName}`);
+        for (let attempt = 1; attempt <= 3; attempt++) {
+            try {
+                await gotoWithRetry(page, href, 3);
+                await delay(10000);
+                let dataObj = {};
+
+                await page.waitForSelector('div[id^="id"] > div.ellipsis > b');
+                const name = await page.$eval('div[id^="id"] > div.ellipsis > b', el => el.textContent.trim());
+                const check = await checkStore(storeId, name);
+                if (check.data) {
+                    console.log(`✅ Store ${storeName} đã tồn tại trong ${stateName}`);
+                    return true;
+                }
+
+                dataObj['name'] = name ?? null;
+
+                try {
+                    await page.click('#ad_vi > a.contact_info');
+                    await delay(10000);
+                } catch (error) {
+                    await page.click('#ad_vi > a');
+                    await delay(10000);
+                }
+                
+                await delay(10000);
+
+                let description;
+                try {
+                    description = await page.$eval('div[id^="id"] > div[id^="ad_"]', el => el.textContent.trim());
+                } catch (error) {
+                    description = await page.$eval('div[id^="id"] > div:first-child', el => el.textContent.trim());
+                }
+                dataObj['description'] = description?.replace('[Translate to English]', '').trim();
+
+                await delay(2000);
+                let phoneSelector;
+                try {
+                    await page.waitForSelector('a[href^="tel:"]');
+                    phoneSelector = 'a[href^="tel:"]';
+                } catch (error) {
+                    const html = await page.content();
+                    console.log(html);
+                    await page.waitForSelector('div[id^="id"] a[href^="tel:"]');
+                    phoneSelector = 'div[id^="id"] a[href^="tel:"]';
+                }
+
+                const addressText = await page.$eval(
+                    'div[id^="id"] > div.ellipsis + div',
+                    el => el.innerText.trim()
+                );
+                const parsed = parseAddressInfo(addressText);
+
+                dataObj['address'] = parsed.address;
+                dataObj['city'] = parsed.city ?? 'N/A';
+                dataObj['state'] = stateName; 
+                dataObj['zipcode'] = parsed.zipcode ?? 'N/A';
+                dataObj['from_id'] = storeId || "7777777"
+
+                let phone;
+                phone = await page.$$eval(phoneSelector, links =>
+                    Array.from(new Set(
+                      links
+                        .map(link => link.textContent.trim())
+                        .filter(phone => phone !== '')
+                    ))
+                  );
+                  console.log(phone, 'phone')
+                  const firstPhone = phone?.find(p => p !== '');
+                  dataObj['business_phone'] = firstPhone ?? 'Contact via website';
+
+                dataObj['email'] = 'nailjob.us@gmail.com';
+
+                console.log(`✅ Data scraped (attempt ${attempt}) cho ${stateName}:`, dataObj);
+                await createStore(dataObj);
+                await delay(30000);
+
                 return true;
-            }
 
-            dataObj['name'] = name ?? null;
-
-            try {
-                await page.click('#ad_vi > a.contact_info');
-                await delay(10000);
             } catch (error) {
-                await page.click('#ad_vi > a');
-                await delay(10000);
-
+                console.error(`❗ Attempt ${attempt} failed cho ${href} trong ${stateName}:`, error.message);
+                await delay(5000);
             }
-            
-
-            await delay(10000);
-
-            let description;
-            try {
-                description = await page.$eval('div[id^="id"] > div[id^="ad_"]', el => el.textContent.trim());
-            } catch (error) {
-                description = await page.$eval('div[id^="id"] > div:first-child', el => el.textContent.trim());
-            }
-            dataObj['description'] = description?.replace('[Translate to English]', '').trim();
-
-            await delay(2000);
-            let phoneSelector;
-            try {
-                await page.waitForSelector('a[href^="tel:"]');
-                phoneSelector = 'a[href^="tel:"]';
-            } catch (error) {
-                const html = await page.content();
-                console.log(html);
-                await page.waitForSelector('div[id^="id"] a[href^="tel:"]');
-                phoneSelector = 'div[id^="id"] a[href^="tel:"]';
-            }
-
-            const addressText = await page.$eval(
-                'div[id^="id"] > div.ellipsis + div',
-                el => el.innerText.trim()
-            );
-            const parsed = parseAddressInfo(addressText);
-
-            dataObj['address'] = parsed.address;
-            dataObj['city'] = parsed.city ?? 'N/A';
-            dataObj['state'] = stateName; 
-            dataObj['zipcode'] = parsed.zipcode ?? 'N/A';
-            dataObj['from_id'] = storeId || "7777777"
-
-            let phone;
-            phone = await page.$$eval(phoneSelector, links =>
-                Array.from(new Set(
-                  links
-                    .map(link => link.textContent.trim())
-                    .filter(phone => phone !== '')
-                ))
-              );
-              console.log(phone, 'phone')
-              const firstPhone = phone?.find(p => p !== '');
-              dataObj['business_phone'] = firstPhone ?? 'Contact via website';
-
-            dataObj['email'] = 'nailjob.us@gmail.com';
-
-            console.log(`✅ Data scraped (attempt ${attempt}) cho ${stateName}:`, dataObj);
-            await createStore(dataObj);
-            await delay(30000);
-
-            return true;
-
-        } catch (error) {
-            console.error(`❗ Attempt ${attempt} failed cho ${href} trong ${stateName}:`, error.message);
-            await delay(5000);
         }
-    }
 
-    console.warn(`⛔ Skipping ${href} sau 3 lần thử thất bại trong ${stateName}.`);
-    return false;
+        console.warn(`⛔ Skipping ${href} sau 3 lần thử thất bại trong ${stateName}.`);
+        return false;
+        
+    } finally {
+        // Đóng page sau khi hoàn thành
+        await page.close();
+    }
 }
 
 // Hàm crawl tất cả URLs của một state
-async function crawlStateUrls(page, stateCode, stateName) {
+async function crawlStateUrls(browser, page, stateCode, stateName) {
     console.log(`\n🌍 Bắt đầu crawl URLs cho bang: ${stateName} (${stateCode})`);
     
     // Kiểm tra xem có file URLs đã lưu chưa
@@ -270,7 +298,7 @@ async function crawlStateUrls(page, stateCode, stateName) {
         const href = urls[i];
         console.log(`\n📊 Progress: ${i + 1}/${urls.length} (${Math.round((i + 1) / urls.length * 100)}%)`);
         
-        const success = await crawlSingleUrl(page, href, stateName);
+        const success = await crawlSingleUrl(browser, href, stateName);
         if (success) {
             successCount++;
         } else {
@@ -332,7 +360,7 @@ connect({
                     const randomUserAgent = userAgents[Math.floor(Math.random() * userAgents.length)];
                     await page.setUserAgent(randomUserAgent);
                     
-                    await crawlStateUrls(page, stateCode, stateName);
+                    await crawlStateUrls(browser, page, stateCode, stateName);
                     
                     console.log(`⏳ Đợi 60 giây trước khi chuyển sang bang tiếp theo...`);
                     await delay(60000);
