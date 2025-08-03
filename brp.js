@@ -7,6 +7,7 @@ const fs = require('fs');
 const path = require('path');
 
 const statesMap = new Map([
+    ['IL', 'Illinois'],
     ['AR', 'Arkansas'],
     ['AZ', 'Arizona'],
   ['AL', 'Alabama'],
@@ -20,7 +21,6 @@ const statesMap = new Map([
   ['GA', 'Georgia'],
   ['HI', 'Hawaii'],
   ['ID', 'Idaho'],
-  ['IL', 'Illinois'],
   ['IN', 'Indiana'],
   ['IA', 'Iowa'],
   ['KS', 'Kansas'],
@@ -61,6 +61,14 @@ const statesMap = new Map([
   ['PR', 'Puerto Rico']
 ]);
 
+const proxies = [
+    {
+        host: '51.79.191.62',
+        port: '8631',
+        username: 'nghiaXju1S',
+        password: 'syqcGVUb'
+    }
+]
 function delay(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
@@ -164,14 +172,10 @@ async function crawlSingleUrl(page, href, stateName) {
 
             try {
                 await page.click('#ad_vi > a');
-                await delay(2000);
-                phoneSelector = 'a[href^="tel:"]';
-                await page.waitForSelector(phoneSelector);
+                await delay(10000);
             } catch (error) {
-                await page.click('a.contact_info');
-                await delay(2000);
-                phoneSelector = 'a[href^="tel:"]';
-                await page.waitForSelector(phoneSelector);
+                await page.click('#ad_vi > a');
+                await delay(10000);
 
             }
             
@@ -211,11 +215,16 @@ async function crawlSingleUrl(page, href, stateName) {
             dataObj['from_id'] = storeId || "7777777"
 
             let phone;
-            phone =  await page.$$eval(phoneSelector, links =>
-                links.map(link => link.textContent.trim())
+            phone = await page.$$eval(phoneSelector, links =>
+                Array.from(new Set(
+                  links
+                    .map(link => link.textContent.trim())
+                    .filter(phone => phone !== '')
+                ))
               );
+              const firstPhone = phone?.find(p => p !== '');
+              dataObj['business_phone'] = firstPhone ?? 'Contact via website';
 
-            dataObj['business_phone'] = phone ?? 'Contact via website';
             dataObj['email'] = 'nailjob.us@gmail.com';
 
             console.log(`✅ Data scraped (attempt ${attempt}) cho ${stateName}:`, dataObj);
@@ -289,7 +298,7 @@ connect({
     connectOption: {},
     tf: true,
     args: ['--disable-web-security', '--disable-features=IsolateOrigins,site-per-process', '--disable-webgl', '--disable-gpu'],
-    // proxy: proxies[0]
+    proxy: proxies[0]
 })
     .then(async response => {
         let { browser, page } = response;
