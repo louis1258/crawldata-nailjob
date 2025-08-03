@@ -148,7 +148,7 @@ async function crawlSingleUrl(page, href, stateName) {
 
     for (let attempt = 1; attempt <= 3; attempt++) {
         try {
-            await gotoWithRetry(page, href, 3);
+            await gotoWithRetry(page, 'https://baonail.com/index.php?stores=Oh-My-Nails&id=75b0c6581b', 3);
             await delay(10000);
             let dataObj = {};
 
@@ -167,13 +167,8 @@ async function crawlSingleUrl(page, href, stateName) {
                 await delay(2000);
                 
             } catch (error) {
-                await page.click('div[id^="id"] a.contact_info');
-                console.log('❌ Không tìm thấy contact_info, thử click trực tiếp tel:', error.message);
-                await page.click('div[id^="id"] a[href^="tel:"]');
-                await page.waitForSelector('div[id^="id"] a.contact_info', {
-                    visible: true,
-                    timeout: 10000
-                });
+                await page.click('#ad_vi > a');
+                await delay(4000);
             }
             
 
