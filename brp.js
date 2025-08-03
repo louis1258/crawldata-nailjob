@@ -171,7 +171,7 @@ async function crawlSingleUrl(page, href, stateName) {
             dataObj['name'] = name ?? null;
 
             try {
-                await page.click('#ad_vi > a');
+                await page.click('#ad_vi > a.contact_info');
                 await delay(10000);
             } catch (error) {
                 await page.click('#ad_vi > a');
@@ -222,6 +222,7 @@ async function crawlSingleUrl(page, href, stateName) {
                     .filter(phone => phone !== '')
                 ))
               );
+              console.log(phone, 'phone')
               const firstPhone = phone?.find(p => p !== '');
               dataObj['business_phone'] = firstPhone ?? 'Contact via website';
 
