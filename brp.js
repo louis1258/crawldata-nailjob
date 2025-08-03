@@ -272,14 +272,6 @@ async function crawlStateUrls(page, stateCode, stateName) {
     console.log(`📊 Tổng cộng: ${urls.length}`);
 }
 
-const proxies = [
-    {
-        host: '51.79.191.62',
-        port: '8631',
-        username: 'nghiaXju1S',
-        password: 'syqcGVUb'
-    },
-];
 
 connect({
     headless: 'auto',
@@ -290,7 +282,7 @@ connect({
     connectOption: {},
     tf: true,
     args: ['--disable-web-security', '--disable-features=IsolateOrigins,site-per-process', '--disable-webgl', '--disable-gpu'],
-    proxy: proxies[0]
+    // proxy: proxies[0]
 })
     .then(async response => {
         let { browser, page } = response;
