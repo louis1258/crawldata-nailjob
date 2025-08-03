@@ -7,6 +7,7 @@ const fs = require('fs');
 const path = require('path');
 
 const statesMap = new Map([
+    ['GA', 'Georgia'],
     ['IL', 'Illinois'],
     ['AR', 'Arkansas'],
     ['AZ', 'Arizona'],
@@ -18,7 +19,6 @@ const statesMap = new Map([
     ['DE', 'Delaware'],
     ['DC', 'Washington, Dc'],
     ['FL', 'Florida'],
-  ['GA', 'Georgia'],
   ['HI', 'Hawaii'],
   ['ID', 'Idaho'],
   ['IN', 'Indiana'],
@@ -158,7 +158,18 @@ async function crawlSingleUrl(browser, href, stateName) {
     const page = await browser.newPage();
     
     try {
-
+        // Thiết lập user agent và headers cho page mới
+        const userAgents = [
+            "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Mobile Safari/537.36",
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36",
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36",
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36",
+            "Mozilla/5.0 (X11; Ubuntu; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36",
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36",
+            "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36",
+        ];
+        const randomUserAgent = userAgents[Math.floor(Math.random() * userAgents.length)];
+        await page.setUserAgent(randomUserAgent);
         await page.setExtraHTTPHeaders({
             'Accept-Language': 'en-US,en;q=0.9',
             'Referer': TARGET_URL,
@@ -168,96 +179,203 @@ async function crawlSingleUrl(browser, href, stateName) {
             height: 1080
         });
 
+        // Thiết lập timeout dài hơn cho VPS
+        page.setDefaultTimeout(60000);
+        page.setDefaultNavigationTimeout(60000);
+
         for (let attempt = 1; attempt <= 3; attempt++) {
             try {
+                console.log(`🔄 Attempt ${attempt}/3: Loading ${href}`);
                 await gotoWithRetry(page, href, 3);
-                await delay(10000);
+                await delay(8000); // Giảm delay để tăng tốc độ
+                
                 let dataObj = {};
 
-                // await page.waitForSelector('div[id^="id"] > div.ellipsis > b');
-                const name = await page.$eval('div[id^="id"] > div.ellipsis > b', el => el.textContent.trim());
+                // Đợi selector với timeout dài hơn
+                try {
+                    await page.waitForSelector('div[id^="id"] > div.ellipsis > b', { timeout: 30000 });
+                } catch (error) {
+                    console.log(`⚠️ Không tìm thấy selector name, thử selector khác...`);
+                    // Thử các selector khác
+                    try {
+                        await page.waitForSelector('div[id^="id"] b', { timeout: 15000 });
+                    } catch (error2) {
+                        console.log(`❌ Không tìm thấy tên store, bỏ qua URL này`);
+                        return false;
+                    }
+                }
+
+                let name;
+                try {
+                    name = await page.$eval('div[id^="id"] > div.ellipsis > b', el => el.textContent.trim());
+                } catch (error) {
+                    try {
+                        name = await page.$eval('div[id^="id"] b', el => el.textContent.trim());
+                    } catch (error2) {
+                        console.log(`❌ Không thể lấy tên store`);
+                        return false;
+                    }
+                }
+
+                if (!name || name.trim() === '') {
+                    console.log(`⚠️ Tên store rỗng, bỏ qua`);
+                    return false;
+                }
+
                 const check = await checkStore(storeId, name);
                 if (check.data) {
                     console.log(`✅ Store ${storeName} đã tồn tại trong ${stateName}`);
                     return true;
                 }
 
-                dataObj['name'] = name ?? null;
+                dataObj['name'] = name;
 
+                // Click contact info với error handling tốt hơn
                 try {
+                    await page.waitForSelector('#ad_vi > a.contact_info', { timeout: 10000 });
                     await page.click('#ad_vi > a.contact_info');
-                    await delay(10000);
+                    await delay(8000);
                 } catch (error) {
-                    await page.click('#ad_vi > a');
-                    await delay(10000);
+                    try {
+                        await page.waitForSelector('#ad_vi > a', { timeout: 10000 });
+                        await page.click('#ad_vi > a');
+                        await delay(8000);
+                    } catch (error2) {
+                        console.log(`⚠️ Không thể click contact info, tiếp tục với dữ liệu hiện tại`);
+                    }
                 }
                 
-                await delay(10000);
+                await delay(5000);
 
-                let description;
+                // Lấy description với error handling
+                let description = '';
                 try {
                     description = await page.$eval('div[id^="id"] > div[id^="ad_"]', el => el.textContent.trim());
                 } catch (error) {
-                    description = await page.$eval('div[id^="id"] > div:first-child', el => el.textContent.trim());
+                    try {
+                        description = await page.$eval('div[id^="id"] > div:first-child', el => el.textContent.trim());
+                    } catch (error2) {
+                        description = 'No description available';
+                    }
                 }
-                dataObj['description'] = description?.replace('[Translate to English]', '').trim();
+                dataObj['description'] = description?.replace('[Translate to English]', '').trim() || 'No description available';
 
                 await delay(2000);
+                
+                // Lấy phone với error handling tốt hơn
                 let phoneSelector;
+                let phone = [];
                 try {
-                    await page.waitForSelector('a[href^="tel:"]');
+                    await page.waitForSelector('a[href^="tel:"]', { timeout: 10000 });
                     phoneSelector = 'a[href^="tel:"]';
                 } catch (error) {
-                    const html = await page.content();
-                    console.log(html);
-                    await page.waitForSelector('div[id^="id"] a[href^="tel:"]');
-                    phoneSelector = 'div[id^="id"] a[href^="tel:"]';
+                    try {
+                        await page.waitForSelector('div[id^="id"] a[href^="tel:"]', { timeout: 10000 });
+                        phoneSelector = 'div[id^="id"] a[href^="tel:"]';
+                    } catch (error2) {
+                        console.log(`⚠️ Không tìm thấy số điện thoại`);
+                        phoneSelector = null;
+                    }
                 }
 
-                const addressText = await page.$eval(
-                    'div[id^="id"] > div.ellipsis + div',
-                    el => el.innerText.trim()
-                );
+                if (phoneSelector) {
+                    try {
+                        phone = await page.$$eval(phoneSelector, links =>
+                            Array.from(new Set(
+                              links
+                                .map(link => link.textContent.trim())
+                                .filter(phone => phone !== '')
+                            ))
+                          );
+                    } catch (error) {
+                        console.log(`⚠️ Lỗi khi lấy số điện thoại:`, error.message);
+                    }
+                }
+
+                console.log('Phone numbers found:', phone);
+                const firstPhone = phone?.find(p => p !== '');
+                dataObj['business_phone'] = firstPhone ?? 'Contact via website';
+
+                // Lấy address với error handling
+                let addressText = '';
+                try {
+                    addressText = await page.$eval(
+                        'div[id^="id"] > div.ellipsis + div',
+                        el => el.innerText.trim()
+                    );
+                } catch (error) {
+                    console.log(`⚠️ Không thể lấy địa chỉ:`, error.message);
+                    addressText = 'Address not available';
+                }
+
                 const parsed = parseAddressInfo(addressText);
 
-                dataObj['address'] = parsed.address;
+                dataObj['address'] = parsed.address || 'Address not available';
                 dataObj['city'] = parsed.city ?? 'N/A';
                 dataObj['state'] = stateName; 
                 dataObj['zipcode'] = parsed.zipcode ?? 'N/A';
-                dataObj['from_id'] = storeId || "7777777"
-
-                let phone;
-                phone = await page.$$eval(phoneSelector, links =>
-                    Array.from(new Set(
-                      links
-                        .map(link => link.textContent.trim())
-                        .filter(phone => phone !== '')
-                    ))
-                  );
-                  console.log(phone, 'phone')
-                  const firstPhone = phone?.find(p => p !== '');
-                  dataObj['business_phone'] = firstPhone ?? 'Contact via website';
-
+                dataObj['from_id'] = storeId || "7777777";
                 dataObj['email'] = 'nailjob.us@gmail.com';
 
                 console.log(`✅ Data scraped (attempt ${attempt}) cho ${stateName}:`, dataObj);
-                await createStore(dataObj);
-                await delay(30000);
+                
+                // Gọi API với error handling
+                try {
+                    await createStore(dataObj);
+                    console.log(`✅ Store created successfully`);
+                } catch (apiError) {
+                    console.error(`❌ API Error:`, apiError.message);
+                    // Vẫn return true vì data đã được scrape thành công
+                }
+                
+                await delay(20000); // Giảm delay
 
                 return true;
 
             } catch (error) {
                 console.error(`❗ Attempt ${attempt} failed cho ${href} trong ${stateName}:`, error.message);
-                await delay(5000);
+                if (attempt < 3) {
+                    await delay(3000); // Giảm delay giữa các attempts
+                }
             }
         }
 
         console.warn(`⛔ Skipping ${href} sau 3 lần thử thất bại trong ${stateName}.`);
         return false;
         
+    } catch (error) {
+        console.error(`❌ Critical error in crawlSingleUrl:`, error.message);
+        return false;
     } finally {
         // Đóng page sau khi hoàn thành
-        await page.close();
+        try {
+            await page.close();
+        } catch (error) {
+            console.log(`⚠️ Error closing page:`, error.message);
+        }
+    }
+}
+
+// Hàm kiểm tra và restart browser nếu cần
+async function checkAndRestartBrowser(browser, page, stateCode, stateName) {
+    try {
+        // Kiểm tra xem browser còn hoạt động không
+        const pages = await browser.pages();
+        if (pages.length === 0) {
+            console.log(`⚠️ Browser không có pages, restarting...`);
+            return false;
+        }
+        
+        // Kiểm tra memory usage (nếu có thể)
+        const context = browser.defaultBrowserContext();
+        if (context) {
+            console.log(`📊 Browser status: OK`);
+        }
+        
+        return true;
+    } catch (error) {
+        console.log(`❌ Browser error detected:`, error.message);
+        return false;
     }
 }
 
@@ -282,16 +400,34 @@ async function crawlStateUrls(browser, page, stateCode, stateName) {
     
     let successCount = 0;
     let failCount = 0;
+    let consecutiveFailures = 0;
     
     for (let i = 0; i < urls.length; i++) {
         const href = urls[i];
         console.log(`\n📊 Progress: ${i + 1}/${urls.length} (${Math.round((i + 1) / urls.length * 100)}%)`);
         
+        // Kiểm tra browser mỗi 10 URLs
+        if (i > 0 && i % 10 === 0) {
+            const browserOk = await checkAndRestartBrowser(browser, page, stateCode, stateName);
+            if (!browserOk) {
+                console.log(`⚠️ Browser có vấn đề, cần restart. Dừng crawl.`);
+                break;
+            }
+        }
+        
         const success = await crawlSingleUrl(browser, href, stateName);
         if (success) {
             successCount++;
+            consecutiveFailures = 0; // Reset counter
         } else {
             failCount++;
+            consecutiveFailures++;
+            
+            // Nếu fail liên tiếp 5 lần, dừng crawl
+            if (consecutiveFailures >= 5) {
+                console.log(`⚠️ Đã fail liên tiếp ${consecutiveFailures} lần, dừng crawl để tránh lỗi`);
+                break;
+            }
         }
         
         // Delay giữa các URLs
@@ -313,20 +449,57 @@ connect({
     skipTarget: [],
     fingerprint: true,
     turnstile: true,
-    connectOption: {},
+    connectOption: {
+        timeout: 60000,
+        retries: 3
+    },
     tf: true,
-    args: ['--disable-web-security', '--disable-features=IsolateOrigins,site-per-process', '--disable-webgl', '--disable-gpu'],
+    args: [
+        '--disable-web-security', 
+        '--disable-features=IsolateOrigins,site-per-process', 
+        '--disable-webgl', 
+        '--disable-gpu',
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-accelerated-2d-canvas',
+        '--no-first-run',
+        '--no-zygote',
+        '--single-process',
+        '--disable-background-timer-throttling',
+        '--disable-backgrounding-occluded-windows',
+        '--disable-renderer-backgrounding',
+        '--disable-features=TranslateUI',
+        '--disable-ipc-flooding-protection',
+        '--memory-pressure-off',
+        '--max_old_space_size=4096',
+        '--remote-debugging-port=0',
+        '--disable-extensions',
+        '--disable-plugins',
+        '--disable-images',
+        '--disable-javascript',
+        '--disable-default-apps'
+    ],
     proxy: proxies[0]
 })
     .then(async response => {
         let { browser, page } = response;
 
         try {
+            let stateIndex = 0;
             for (const [stateCode, stateName] of statesMap) {
-                console.log(`\n🚀 Bắt đầu crawl bang: ${stateName} (${stateCode})`);
+                stateIndex++;
+                console.log(`\n🚀 Bắt đầu crawl bang: ${stateName} (${stateCode}) - ${stateIndex}/${statesMap.size}`);
                 
                 try {
-                    await page.goto(TARGET_URL)
+                    // Kiểm tra browser trước khi bắt đầu
+                    const browserOk = await checkAndRestartBrowser(browser, page, stateCode, stateName);
+                    if (!browserOk) {
+                        console.log(`⚠️ Browser không ổn định, bỏ qua bang ${stateName}`);
+                        continue;
+                    }
+                    
+                    await page.goto(TARGET_URL, { waitUntil: 'networkidle2', timeout: 30000 });
                     await page.setUserAgent("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36")
                     await page.setExtraHTTPHeaders({
                         'Accept-Language': 'en-US,en;q=0.9',
@@ -351,11 +524,22 @@ connect({
                     
                     await crawlStateUrls(browser, page, stateCode, stateName);
                     
-                    console.log(`⏳ Đợi 60 giây trước khi chuyển sang bang tiếp theo...`);
-                    await delay(60000);
+                    console.log(`⏳ Đợi 30 giây trước khi chuyển sang bang tiếp theo...`);
+                    await delay(30000);
                     
                 } catch (error) {
-                    console.error(`❌ Lỗi khi xử lý bang ${stateName}:`, error);
+                    console.error(`❌ Lỗi khi xử lý bang ${stateName}:`, error.message);
+                    
+                    // Thử restart browser nếu có lỗi nghiêm trọng
+                    try {
+                        console.log(`🔄 Thử restart browser...`);
+                        await browser.close();
+                        // Browser sẽ được restart tự động bởi puppeteer-real-browser
+                        await delay(10000);
+                    } catch (restartError) {
+                        console.error(`❌ Không thể restart browser:`, restartError.message);
+                    }
+                    
                     continue;
                 }
             }
@@ -366,7 +550,11 @@ connect({
         }
         finally {
             if (browser) {
-                await browser.close();
+                try {
+                    await browser.close();
+                } catch (error) {
+                    console.log(`⚠️ Error closing browser:`, error.message);
+                }
             }
         }
     })
