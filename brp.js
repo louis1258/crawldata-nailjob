@@ -7,10 +7,10 @@ const fs = require('fs');
 const path = require('path');
 
 const statesMap = new Map([
+    ['AR', 'Arkansas'],
+    ['AZ', 'Arizona'],
   ['AL', 'Alabama'],
   ['AK', 'Alaska'],
-  ['AZ', 'Arizona'],
-  ['AR', 'Arkansas'],
   ['CA', 'California'],
   ['CO', 'Colorado'],
   ['CT', 'Connecticut'],
@@ -69,7 +69,7 @@ async function gotoWithRetry(page, url, maxRetries = 3) {
     let retries = 0;
     while (retries < maxRetries) {
         try {
-            await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 200000 });
+            await page.goto(url, { waitUntil: 'networkidle0', timeout: 200000 });
             return true;
         } catch (error) {
             console.error(`Failed to load ${url} (Attempt ${retries + 1} of ${maxRetries}):`, error);
@@ -163,14 +163,16 @@ async function crawlSingleUrl(page, href, stateName) {
             dataObj['name'] = name ?? null;
 
             try {
+                await page.click('#ad_vi > a');
+                
+            } catch (error) {
                 await page.click('div[id^="id"] a.contact_info');
+                console.log('❌ Không tìm thấy contact_info, thử click trực tiếp tel:', error.message);
+                await page.click('div[id^="id"] a[href^="tel:"]');
                 await page.waitForSelector('div[id^="id"] a.contact_info', {
                     visible: true,
                     timeout: 10000
                 });
-            } catch (error) {
-                console.log('❌ Không tìm thấy contact_info, thử click trực tiếp tel:', error.message);
-                await page.click('div[id^="id"] a[href^="tel:"]');
             }
             
 
@@ -187,11 +189,11 @@ async function crawlSingleUrl(page, href, stateName) {
             await delay(2000);
             let phoneSelector;
             try {
+                await page.waitForSelector('#ad_vi > a');
+                phoneSelector = '#ad_vi > a';
+            } catch (error) {
                 await page.waitForSelector('div[id^="id"] a.contact_info');
                 phoneSelector = 'div[id^="id"] a.contact_info';
-            } catch (error) {
-                await page.waitForSelector('div[id^="id"] a[href^="tel:"]', { timeout: 5000 });
-                phoneSelector = 'div[id^="id"] a[href^="tel:"]';
             }
 
             const addressText = await page.$eval(
