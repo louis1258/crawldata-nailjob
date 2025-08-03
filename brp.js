@@ -299,7 +299,7 @@ connect({
     connectOption: {},
     tf: true,
     args: ['--disable-web-security', '--disable-features=IsolateOrigins,site-per-process', '--disable-webgl', '--disable-gpu'],
-    // proxy: proxies[0]
+    proxy: proxies[0]
 })
     .then(async response => {
         let { browser, page } = response;
