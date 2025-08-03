@@ -165,11 +165,14 @@ async function crawlSingleUrl(page, href, stateName) {
             try {
                 await page.click('#ad_vi > a');
                 await delay(2000);
-                
+                phoneSelector = 'a[href^="tel:"]';
+                await page.waitForSelector(phoneSelector);
             } catch (error) {
-                console.log('❌ Không tìm thấy contact_info, thử click trực tiếp tel:', error.message);
-                await page.click('#ad_vi > a');
-                await delay(4000);
+                await page.click('a.contact_info');
+                await delay(2000);
+                phoneSelector = 'a[href^="tel:"]';
+                await page.waitForSelector(phoneSelector);
+
             }
             
 
@@ -186,8 +189,8 @@ async function crawlSingleUrl(page, href, stateName) {
             await delay(2000);
             let phoneSelector;
             try {
-                await page.waitForSelector('#ad_vi > a');
-                phoneSelector = '#ad_vi > a';
+                await page.waitForSelector('a[href^="tel:"]');
+                phoneSelector = 'a[href^="tel:"]';
             } catch (error) {
                 const html = await page.content();
                 console.log(html);
@@ -208,7 +211,9 @@ async function crawlSingleUrl(page, href, stateName) {
             dataObj['from_id'] = storeId || "7777777"
 
             let phone;
-            phone = await page.$eval(phoneSelector, el => el.textContent.trim());
+            phone =  await page.$$eval(phoneSelector, links =>
+                links.map(link => link.textContent.trim())
+              );
 
             dataObj['business_phone'] = phone ?? 'Contact via website';
             dataObj['email'] = 'nailjob.us@gmail.com';
