@@ -219,13 +219,13 @@ async function crawlSingleUrl(browser, href, stateName) {
 
                 // Click contact info với error handling tốt hơn
                 try {
-                    await page.waitForSelector('#ad_en > a.contact_info', { timeout: 10000 });
-                    await page.click('#ad_en > a.contact_info');
+                    await page.waitForSelector('#ad_vi > a.contact_info', { timeout: 10000 });
+                    await page.click('#ad_vi > a.contact_info');
                     await delay(8000);
                 } catch (error) {
                     try {
-                        await page.waitForSelector('#ad_en > a', { timeout: 10000 });
-                        await page.click('#ad_en > a');
+                        await page.waitForSelector('#ad_vi > a', { timeout: 10000 });
+                        await page.click('#ad_vi > a');
                         await delay(8000);
                     } catch (error2) {
                         console.log(`⚠️ Không thể click contact info, tiếp tục với dữ liệu hiện tại`);
@@ -287,7 +287,7 @@ async function crawlSingleUrl(browser, href, stateName) {
                 let addressText = '';
                 try {
                     addressText = await page.$eval(
-                        '#ad_en',
+                        '#ad_vi',
                         el => el.innerText.trim()
                     );
                 } catch (error) {
