@@ -61,14 +61,14 @@ const statesMap = new Map([
   ['PR', 'Puerto Rico']
 ]);
 
-const proxies = [
-    {
-        host: '51.79.191.62',
-        port: '8631',
-        username: 'nghiaXju1S',
-        password: 'syqcGVUb'
-    }
-]
+// const proxies = [
+//     {
+//         host: '51.79.191.62',
+//         port: '8631',
+//         username: 'nghiaXju1S',
+//         password: 'syqcGVUb'
+//     }
+// ]
 function delay(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
@@ -298,7 +298,7 @@ connect({
     connectOption: {},
     tf: true,
     args: ['--disable-web-security', '--disable-features=IsolateOrigins,site-per-process', '--disable-webgl', '--disable-gpu'],
-    proxy: proxies[0]
+    // proxy: proxies[0]
 })
     .then(async response => {
         let { browser, page } = response;
