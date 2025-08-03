@@ -164,6 +164,7 @@ async function crawlSingleUrl(page, href, stateName) {
 
             try {
                 await page.click('#ad_vi > a');
+                await delay(2000);
                 
             } catch (error) {
                 await page.click('div[id^="id"] a.contact_info');
