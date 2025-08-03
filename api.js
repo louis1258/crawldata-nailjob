@@ -7,7 +7,7 @@ const baseURL = 'http://localhost:3001/api/v1/upload';
 const AUTH_URL = 'http://localhost:3001/api/v1/auth/sign_in';
 
 // Token management
-let currentToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwaG9uZSI6MSwidXNlcklkIjoiNjgzZGJiYWE4YTk1NjA2NWVlZmExMzJkIiwiZW1haWwiOiJuZ2hpYUBnbWFpbC5jb20iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3NTQxMzkzNTgsImV4cCI6MTc1NDE1NzM1OH0.ycKPJEhVjiM9jnPJLVJ5anAJWVIv2B3XIVlheUax15U';
+let currentToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwaG9uZSI6MSwidXNlcklkIjoiNjgzZGJiYWE4YTk1NjA2NWVlZmExMzJkIiwiZW1haWwiOiJuZ2hpYUBnbWFpbC5jb20iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3NTQyMDY3MTQsImV4cCI6MTc1NDgxMTUxNH0.jpn2MlHwehUj7wCPX7r2bhX5FNkUPFMzuHmQL7dFlQA';
 let refreshToken = null;
 
 // Login credentials 
