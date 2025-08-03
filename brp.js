@@ -158,18 +158,7 @@ async function crawlSingleUrl(browser, href, stateName) {
     const page = await browser.newPage();
     
     try {
-        // Thiết lập user agent và headers cho page mới
-        const userAgents = [
-            "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Mobile Safari/537.36",
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36",
-            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36",
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36",
-            "Mozilla/5.0 (X11; Ubuntu; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36",
-            "Mozilla/5.0 (Macintosh; Intel Mac OS X 12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36",
-            "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36",
-        ];
-        const randomUserAgent = userAgents[Math.floor(Math.random() * userAgents.length)];
-        await page.setUserAgent(randomUserAgent);
+
         await page.setExtraHTTPHeaders({
             'Accept-Language': 'en-US,en;q=0.9',
             'Referer': TARGET_URL,
@@ -185,7 +174,7 @@ async function crawlSingleUrl(browser, href, stateName) {
                 await delay(10000);
                 let dataObj = {};
 
-                await page.waitForSelector('div[id^="id"] > div.ellipsis > b');
+                // await page.waitForSelector('div[id^="id"] > div.ellipsis > b');
                 const name = await page.$eval('div[id^="id"] > div.ellipsis > b', el => el.textContent.trim());
                 const check = await checkStore(storeId, name);
                 if (check.data) {
