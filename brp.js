@@ -148,7 +148,7 @@ async function crawlSingleUrl(page, href, stateName) {
 
     for (let attempt = 1; attempt <= 3; attempt++) {
         try {
-            await gotoWithRetry(page, 'https://baonail.com/index.php?stores=Oh-My-Nails&id=75b0c6581b', 3);
+            await gotoWithRetry(page, href, 3);
             await delay(10000);
             let dataObj = {};
 
