@@ -167,6 +167,7 @@ async function crawlSingleUrl(page, href, stateName) {
                 await delay(2000);
                 
             } catch (error) {
+                console.log('❌ Không tìm thấy contact_info, thử click trực tiếp tel:', error.message);
                 await page.click('#ad_vi > a');
                 await delay(4000);
             }
