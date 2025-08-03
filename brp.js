@@ -189,6 +189,8 @@ async function crawlSingleUrl(page, href, stateName) {
                 await page.waitForSelector('#ad_vi > a');
                 phoneSelector = '#ad_vi > a';
             } catch (error) {
+                const html = await page.content();
+                console.log(html);
                 await page.waitForSelector('div[id^="id"] a[href^="tel:"]');
                 phoneSelector = 'div[id^="id"] a[href^="tel:"]';
             }
