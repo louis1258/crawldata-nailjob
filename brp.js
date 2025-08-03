@@ -148,17 +148,13 @@ async function getAllUrlsForState(page, stateCode, stateName) {
 }
 
 // Hàm crawl một URL cụ thể
-async function crawlSingleUrl(browser, href, stateName) {
+async function crawlSingleUrl(page, href, stateName) {
     const storeId = getStoreId(href);
     const storeName = getStoreName(href);
     
     console.log(`\n🏪 Processing: ${storeName || 'Unknown'} (ID: ${storeId || 'N/A'}) - ${stateName}`);
 
-    // Tạo page mới cho mỗi URL
-    const page = await browser.newPage();
-    
     try {
-        // Thiết lập user agent và headers cho page mới
         const userAgents = [
             "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Mobile Safari/537.36",
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36",
@@ -334,37 +330,9 @@ async function crawlSingleUrl(browser, href, stateName) {
         console.error(`❌ Critical error in crawlSingleUrl:`, error.message);
         return false;
     } finally {
-        // Đóng page sau khi hoàn thành
-        try {
-            await page.close();
-        } catch (error) {
-            console.log(`⚠️ Error closing page:`, error.message);
-        }
     }
 }
 
-// Hàm kiểm tra và restart browser nếu cần
-async function checkAndRestartBrowser(browser, page, stateCode, stateName) {
-    try {
-        // Kiểm tra xem browser còn hoạt động không
-        const pages = await browser.pages();
-        if (pages.length === 0) {
-            console.log(`⚠️ Browser không có pages, restarting...`);
-            return false;
-        }
-        
-        // Kiểm tra memory usage (nếu có thể)
-        const context = browser.defaultBrowserContext();
-        if (context) {
-            console.log(`📊 Browser status: OK`);
-        }
-        
-        return true;
-    } catch (error) {
-        console.log(`❌ Browser error detected:`, error.message);
-        return false;
-    }
-}
 
 // Hàm crawl tất cả URLs của một state
 async function crawlStateUrls(browser, page, stateCode, stateName) {
@@ -393,16 +361,7 @@ async function crawlStateUrls(browser, page, stateCode, stateName) {
         const href = urls[i];
         console.log(`\n📊 Progress: ${i + 1}/${urls.length} (${Math.round((i + 1) / urls.length * 100)}%)`);
         
-        // Kiểm tra browser mỗi 10 URLs
-        if (i > 0 && i % 10 === 0) {
-            const browserOk = await checkAndRestartBrowser(browser, page, stateCode, stateName);
-            if (!browserOk) {
-                console.log(`⚠️ Browser có vấn đề, cần restart. Dừng crawl.`);
-                break;
-            }
-        }
-        
-        const success = await crawlSingleUrl(browser, href, stateName);
+        const success = await crawlSingleUrl(page, href, stateName);
         if (success) {
             successCount++;
             consecutiveFailures = 0; // Reset counter
@@ -448,7 +407,7 @@ connect({
         '--disable-gpu',
         '--no-sandbox',
     ],
-    proxy: proxies[0]
+    // proxy: proxies[0]
 })
     .then(async response => {
         let { browser, page } = response;
@@ -460,12 +419,6 @@ connect({
                 console.log(`\n🚀 Bắt đầu crawl bang: ${stateName} (${stateCode}) - ${stateIndex}/${statesMap.size}`);
                 
                 try {
-                    // Kiểm tra browser trước khi bắt đầu
-                    const browserOk = await checkAndRestartBrowser(browser, page, stateCode, stateName);
-                    if (!browserOk) {
-                        console.log(`⚠️ Browser không ổn định, bỏ qua bang ${stateName}`);
-                        continue;
-                    }
                     
                     await page.goto(TARGET_URL, { waitUntil: 'networkidle2', timeout: 30000 });
                     await page.setUserAgent("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36")
