@@ -128,10 +128,6 @@ async function createNewBrowser() {
         width: 1280,
         height: 1080
     });
-    await page.setCookie({
-        name: 'mylang',
-        value: 'en',
-    });
     
     // Navigate to TARGET_URL with retry mechanism
     const maxRetries = 3;
@@ -159,21 +155,32 @@ async function createNewBrowser() {
     if (!navigationSuccess) {
         console.log('⚠️ Warning: Browser created but navigation to TARGET_URL failed. Cookie operations may not work properly.');
     }
-    
+    await page.setCookie({
+        name: 'mylang',
+        value: 'en',
+    });
     return { browser, page };
 }
-
 async function gotoWithRetry(page, url, maxRetries = 3) {
     let retries = 0;
     while (retries < maxRetries) {
         try {
+            console.log(`Going to ${url}...`);
             await page.goto(url, { waitUntil: 'networkidle0', timeout: 200000 });
             return true;
         } catch (error) {
-            console.error(`Failed to load ${url} (Attempt ${retries + 1} of ${maxRetries}):`, error);
+            const errMsg = error.message || error.toString();
+            console.error(`Failed to load ${url} (Attempt ${retries + 1} of ${maxRetries}):`, errMsg);
+
+            if (errMsg.includes('net::ERR_PROXY_CONNECTION_FAILED')) {
+                console.log(`Detected proxy failure. Switching IP or proxy...`);
+                await changeIP();
+            }
+
             retries += 1;
             if (retries < maxRetries) {
                 console.log(`Retrying ${url}...`);
+                await new Promise(res => setTimeout(res, 2000)); // chờ 2s trước khi retry
             } else {
                 console.error(`All retry attempts failed for ${url}`);
                 return false;
@@ -181,6 +188,7 @@ async function gotoWithRetry(page, url, maxRetries = 3) {
         }
     }
 }
+
 
 // Hàm lưu URLs vào file
 const saveUrlsToFile = (stateCode, urls) => {
