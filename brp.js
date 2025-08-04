@@ -7,10 +7,6 @@ const fs = require('fs');
 const path = require('path');
 
 const statesMap = new Map([
-    ['IL', 'Illinois'],
-    ['LA', 'Louisiana'],
-    ['HI', 'Hawaii'],
-    ['GA', 'Georgia'],
     ['AR', 'Arkansas'],
     ['AZ', 'Arizona'],
     ['AL', 'Alabama'],
@@ -58,7 +54,11 @@ const statesMap = new Map([
     ['WV', 'West Virginia'],
     ['WI', 'Wisconsin'],
     ['WY', 'Wyoming'],
-    ['PR', 'Puerto Rico']
+    ['PR', 'Puerto Rico'],
+    ['IL', 'Illinois'],
+    ['LA', 'Louisiana'],
+    ['HI', 'Hawaii'],
+    ['GA', 'Georgia'],
 ]);
 
 
