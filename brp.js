@@ -552,21 +552,45 @@ async function crawlStateUrls(browser, page, stateCode, stateName) {
             page = newBrowserData.page;
         }
 
-        const result = await crawlSingleUrl(browser, page, href, stateName);
-        if (result && result.success) {
-            successCount++;
-            consecutiveFailures = 0;
-        } else {
+        // Retry logic cho từng link - thử tối đa 3 lần
+        let linkSuccess = false;
+        let linkRetryCount = 0;
+        const maxLinkRetries = 3;
+        
+        while (!linkSuccess && linkRetryCount < maxLinkRetries) {
+            linkRetryCount++;
+            console.log(`🔗 Thử crawl link lần ${linkRetryCount}/${maxLinkRetries}: ${href}`);
+            
+            const result = await crawlSingleUrl(browser, page, href, stateName);
+            
+            if (result && result.success) {
+                linkSuccess = true;
+                successCount++;
+                consecutiveFailures = 0;
+                console.log(`✅ Thành công crawl link sau ${linkRetryCount} lần thử`);
+            } else {
+                console.log(`❌ Lần thử ${linkRetryCount} thất bại cho link: ${href}`);
+                
+                // Nếu result có browser và page mới, cập nhật chúng
+                if (result && result.browser && result.page) {
+                    browser = result.browser;
+                    page = result.page;
+                    console.log('🔄 Đã cập nhật browser và page mới từ crawlSingleUrl');
+                }
+                
+                // Nếu chưa hết lần thử, đợi một chút rồi thử lại
+                if (linkRetryCount < maxLinkRetries) {
+                    console.log(`⏳ Đợi 5 giây trước khi thử lại link...`);
+                    await delay(5000);
+                }
+            }
+        }
+        
+        // Nếu sau tất cả lần thử vẫn fail
+        if (!linkSuccess) {
             failCount++;
             consecutiveFailures++;
-            
-            // Nếu result có browser và page mới, cập nhật chúng
-            if (result && result.browser && result.page) {
-                browser = result.browser;
-                page = result.page;
-                console.log('🔄 Đã cập nhật browser và page mới từ crawlSingleUrl');
-            }
-            await crawlSingleUrl(browser, page, href, stateName);
+            console.log(`⛔ Bỏ qua link sau ${maxLinkRetries} lần thử thất bại: ${href}`);
         }
 
         if (consecutiveFailures >= 5) {
