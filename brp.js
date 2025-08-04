@@ -572,34 +572,22 @@ connect({
                     await delay(30000);
 
                 } catch (error) {
-                    console.error(`❌ Lỗi khi xử lý bang ${stateName}:`, error.message);
 
-                    // Thử restart browser nếu có lỗi nghiêm trọng
                     try {
                         console.log(`🔄 Thử restart browser...`);
-                        await browser.close();
                         // Browser sẽ được restart tự động bởi puppeteer-real-browser
                         await delay(10000);
-                    } catch (restartError) {
-                        console.error(`❌ Không thể restart browser:`, restartError.message);
+                    } catch (error) {
+                        console.error(`❌ Lỗi khi xử lý bang ${stateName}:`, error.message);
                     }
 
-                    continue;
+                    continue; // Continue to next state
                 }
             }
 
             console.log(`🎉 Đã hoàn thành crawl tất cả các bang!`);
         } catch (error) {
             console.error(`Error during scraping:`, error);
-        }
-        finally {
-            if (browser) {
-                try {
-                    await browser.close();
-                } catch (error) {
-                    console.log(`⚠️ Error closing browser:`, error.message);
-                }
-            }
         }
     })
     .catch(error => {
