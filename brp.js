@@ -379,7 +379,8 @@ async function crawlSingleUrl(browser, page, href, stateName) {
                     }).filter(item => item.title);
                   });
                 
-                dataObj['address'] = results[0].nextContent || 'Address not available';
+                  console.log(results, 'results')
+                dataObj['address'] = results?.filter(item => item.nextContent!=null)[0].nextContent || stateName;
                 dataObj['city'] = 'N/A';
                 dataObj['state'] = stateName;
                 dataObj['zipcode'] = 'N/A';
