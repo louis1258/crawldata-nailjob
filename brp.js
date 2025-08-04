@@ -240,7 +240,7 @@ async function crawlSingleUrl(browser, page, href, stateName) {
     const check = await checkStore(storeId, storeSlug);
     if (check.data) {
         console.log(`✅ Store ${storeSlug} đã tồn tại trong ${stateName}`);
-        return true;
+        return {success: true};
     }
     console.log(`\n🏪 Processing: ${storeSlug || 'Unknown'} (ID: ${storeId || 'N/A'}) - ${stateName}`);
 
