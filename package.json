@@ -16,7 +16,7 @@
     "crypto": "^1.0.1",
     "fs": "^0.0.1-security",
     "https": "^1.0.0",
-    "https-proxy-agent": "^7.0.5",
+    "https-proxy-agent": "^7.0.6",
     "node-fetch": "^3.3.2",
     "path": "^0.12.7",
     "proxy-chain": "^2.5.5",

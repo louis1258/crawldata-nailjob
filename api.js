@@ -2,9 +2,56 @@ const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
 const FormData = require('form-data');
+const dns = require('dns');
+const https = require('https');
 
-const baseURL = 'http://localhost:3001/api/v1/upload';
-const AUTH_URL = 'http://localhost:3001/api/v1/auth/sign_in';
+const agent = new https.Agent({
+    lookup: (hostname, options, cb) => {
+      dns.lookup(hostname, { family: 4 }, cb); 
+    }
+  });
+
+  async function countdownDelay(seconds) {
+    return new Promise(resolve => {
+      const interval = setInterval(() => {
+        process.stdout.write(`\r⏳ Đợi ${seconds}s...  `);
+        seconds--;
+        if (seconds < 0) {
+          clearInterval(interval);
+          process.stdout.write('\n✅ Hết thời gian đợi!\n');
+          resolve();
+        }
+      }, 1000);
+    });
+  }
+
+  const changeIP = async () => {
+    try {
+      const response = await axios.get('https://api.proxydancu.com/getip/us/9416718afc0daa421c64d1e22bb8db9707650819', {
+        httpsAgent: agent
+      });
+      console.log('🎉 Đổi IP thành công:', response.data);
+      return response;
+  
+    } catch (error) {
+      const data = error?.response?.data;
+      console.log('❌ Lỗi đổi IP:', data?.error || error.message);
+  
+      // Check nếu có chuỗi báo đợi X giây
+      const match = data?.error?.match(/sau (\d+) giây/);
+      const waitSeconds = match ? parseInt(match[1]) : 300;
+  
+      console.log(`🔁 Sẽ thử lại sau ${waitSeconds} giây...`);
+      await countdownDelay(waitSeconds);
+  
+      // Retry
+      return await changeIP();
+    }
+  }
+  
+
+const baseURL = 'https://api.staging.nailjob.us/api/v1/upload';
+const AUTH_URL = 'https://api.staging.nailjob.us/api/v1/auth/sign_in';
 
 // Token management
 let currentToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwaG9uZSI6MSwidXNlcklkIjoiNjgzZGJiYWE4YTk1NjA2NWVlZmExMzJkIiwiZW1haWwiOiJuZ2hpYUBnbWFpbC5jb20iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3NTQyMDY3MTQsImV4cCI6MTc1NDgxMTUxNH0.jpn2MlHwehUj7wCPX7r2bhX5FNkUPFMzuHmQL7dFlQA';
@@ -131,7 +178,7 @@ const upload = async (imageName, fileBuffer) => {
     }
 };
 
-const STORE_URL = 'http://localhost:3001/api/v1/technician/store/crawl';
+const STORE_URL = 'https://api.staging.nailjob.us/api/v1/technician/store/crawl';
 
 const getRandomImageFromNailFolder = () => {
     const nailFolderPath = path.join(__dirname, 'Nail');
@@ -185,9 +232,9 @@ const createStore = async (store) => {
     }
 };
 
-const checkStore = async (from_id, name) => {
+const checkStore = async (from_id, from_slug) => {
     const instance = createAxiosInstance();
-    const response = await instance.post('http://localhost:3001/api/v1/technician/store/check-name', {from_id, name});
+    const response = await instance.post('https://api.staging.nailjob.us/api/v1/technician/store/check-name', {from_id, from_slug});
     return response.data;
 };
 
@@ -197,5 +244,6 @@ module.exports = {
     checkStore, 
     login, 
     createAxiosInstance,
-    getValidToken 
+    getValidToken,
+    changeIP
 };

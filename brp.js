@@ -2,13 +2,15 @@ const { connect } = require('puppeteer-real-browser');
 const parseAddressInfo = require('./utils/parseAddressInfo');
 const { parseUrlInfo, getStoreId, getStoreName } = require('./utils/parseUrlInfo');
 const TARGET_URL = 'https://baonail.com';
-const { createStore, checkStore } = require('./api');
+const { createStore, checkStore, changeIP } = require('./api');
 const fs = require('fs');
 const path = require('path');
 
 const statesMap = new Map([
-    ['GA', 'Georgia'],
     ['IL', 'Illinois'],
+    ['LA', 'Louisiana'],
+    ['HI', 'Hawaii'],
+    ['GA', 'Georgia'],
     ['AR', 'Arkansas'],
     ['AZ', 'Arizona'],
     ['AL', 'Alabama'],
@@ -19,58 +21,122 @@ const statesMap = new Map([
     ['DE', 'Delaware'],
     ['DC', 'Washington, Dc'],
     ['FL', 'Florida'],
-  ['HI', 'Hawaii'],
-  ['ID', 'Idaho'],
-  ['IN', 'Indiana'],
-  ['IA', 'Iowa'],
-  ['KS', 'Kansas'],
-  ['KY', 'Kentucky'],
-  ['LA', 'Louisiana'],
-  ['ME', 'Maine'],
-  ['MD', 'Maryland'],
-  ['MA', 'Massachusetts'],
-  ['MI', 'Michigan'],
-  ['MN', 'Minnesota'],
-  ['MS', 'Mississippi'],
-  ['MO', 'Missouri'],
-  ['MT', 'Montana'],
-  ['NE', 'Nebraska'],
-  ['NV', 'Nevada'],
-  ['NH', 'New Hampshire'],
-  ['NJ', 'New Jersey'],
-  ['NM', 'New Mexico'],
-  ['NY', 'New York'],
-  ['NC', 'North Carolina'],
-  ['ND', 'North Dakota'],
-  ['OH', 'Ohio'],
-  ['OK', 'Oklahoma'],
-  ['OR', 'Oregon'],
-  ['PA', 'Pennsylvania'],
-  ['RI', 'Rhode Island'],
-  ['SC', 'South Carolina'],
-  ['SD', 'South Dakota'],
-  ['TN', 'Tennessee'],
-  ['TX', 'Texas'],
-  ['UT', 'Utah'],
-  ['VT', 'Vermont'],
-  ['VA', 'Virginia'],
-  ['WA', 'Washington'],
-  ['WV', 'West Virginia'],
-  ['WI', 'Wisconsin'],
-  ['WY', 'Wyoming'],
-  ['PR', 'Puerto Rico']
+    ['ID', 'Idaho'],
+    ['IN', 'Indiana'],
+    ['IA', 'Iowa'],
+    ['KS', 'Kansas'],
+    ['KY', 'Kentucky'],
+    ['ME', 'Maine'],
+    ['MD', 'Maryland'],
+    ['MA', 'Massachusetts'],
+    ['MI', 'Michigan'],
+    ['MN', 'Minnesota'],
+    ['MS', 'Mississippi'],
+    ['MO', 'Missouri'],
+    ['MT', 'Montana'],
+    ['NE', 'Nebraska'],
+    ['NV', 'Nevada'],
+    ['NH', 'New Hampshire'],
+    ['NJ', 'New Jersey'],
+    ['NM', 'New Mexico'],
+    ['NY', 'New York'],
+    ['NC', 'North Carolina'],
+    ['ND', 'North Dakota'],
+    ['OH', 'Ohio'],
+    ['OK', 'Oklahoma'],
+    ['OR', 'Oregon'],
+    ['PA', 'Pennsylvania'],
+    ['RI', 'Rhode Island'],
+    ['SC', 'South Carolina'],
+    ['SD', 'South Dakota'],
+    ['TN', 'Tennessee'],
+    ['TX', 'Texas'],
+    ['UT', 'Utah'],
+    ['VT', 'Vermont'],
+    ['VA', 'Virginia'],
+    ['WA', 'Washington'],
+    ['WV', 'West Virginia'],
+    ['WI', 'Wisconsin'],
+    ['WY', 'Wyoming'],
+    ['PR', 'Puerto Rico']
 ]);
 
-const proxies = [
+
+const proxy =
     {
         host: '51.79.191.62',
         port: '8631',
         username: 'nghiaXju1S',
         password: 'syqcGVUb'
     }
-]
+
 function delay(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+// Hàm tạo browser mới
+async function createNewBrowser() {
+    const response = await connect({
+        headless: false,
+        defaultViewport: null,
+        args: [
+            '--no-sandbox',
+            '--disable-setuid-sandbox',
+            '--disable-dev-shm-usage',
+            '--disable-accelerated-2d-canvas',
+            '--no-first-run',
+            '--no-zygote',
+            '--disable-gpu',
+            '--disable-background-timer-throttling',
+            '--disable-backgrounding-occluded-windows',
+            '--disable-renderer-backgrounding',
+            '--disable-features=TranslateUI',
+            '--disable-ipc-flooding-protection',
+            '--disable-web-security',
+            `--proxy-server=${proxy.host}:${proxy.port}`,
+            '--disable-features=IsolateOrigins,site-per-process',
+            '--disable-webgl',
+            '--disable-gpu',
+            '--no-sandbox',
+        ],
+    });
+    
+    const { browser, page } = response;
+    
+    // Cấu hình page mới
+    await page.authenticate({
+        username: proxy.username,
+        password: proxy.password
+    });
+    
+    const userAgents = [
+        "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Mobile Safari/537.36",
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36",
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36",
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36",
+        "Mozilla/5.0 (X11; Ubuntu; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36",
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36",
+        "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36",
+    ];
+    const randomUserAgent = userAgents[Math.floor(Math.random() * userAgents.length)];
+    await page.setUserAgent(randomUserAgent);
+    await page.setExtraHTTPHeaders({
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Referer': TARGET_URL,
+    });
+    await page.setViewport({
+        width: 1280,
+        height: 1080
+    });
+    
+    try {
+        await page.goto(TARGET_URL, { waitUntil: 'networkidle2', timeout: 30000 });
+        console.log('✅ New browser navigated to TARGET_URL successfully');
+    } catch (error) {
+        console.log('⚠️ Error navigating to TARGET_URL in new browser:', error.message);
+    }
+    
+    return { browser, page };
 }
 
 async function gotoWithRetry(page, url, maxRetries = 3) {
@@ -98,7 +164,7 @@ const saveUrlsToFile = (stateCode, urls) => {
     if (!fs.existsSync(dataDir)) {
         fs.mkdirSync(dataDir, { recursive: true });
     }
-    
+
     const filePath = path.join(dataDir, `${stateCode}_urls.json`);
     const data = {
         stateCode,
@@ -107,7 +173,7 @@ const saveUrlsToFile = (stateCode, urls) => {
         urls: urls,
         timestamp: new Date().toISOString()
     };
-    
+
     fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
     console.log(`💾 Đã lưu ${urls.length} URLs cho ${stateCode} vào file: ${filePath}`);
     return filePath;
@@ -127,19 +193,19 @@ const loadUrlsFromFile = (stateCode) => {
 // Hàm lấy tất cả URLs của một state
 async function getAllUrlsForState(page, stateCode, stateName) {
     console.log(`\n🔍 Bắt đầu lấy URLs cho bang: ${stateName} (${stateCode})`);
-    
+
     const pageUrl = `${TARGET_URL}/index.php?state=${stateCode}&stype=&stype=1`;
     console.log(`🔗 URL: ${pageUrl}`);
-    
+
     try {
         await page.goto(pageUrl, { waitUntil: 'networkidle2' });
         await delay(2000);
-        
+
         const allUrls = await getAllUrlsFromAllPages(page);
         console.log(`📊 Tổng số URLs tìm thấy cho ${stateName}: ${allUrls.length}`);
-        
+
         saveUrlsToFile(stateCode, allUrls);
-        
+
         return allUrls;
     } catch (error) {
         console.error(`❌ Lỗi khi lấy URLs cho bang ${stateName}:`, error);
@@ -148,24 +214,17 @@ async function getAllUrlsForState(page, stateCode, stateName) {
 }
 
 // Hàm crawl một URL cụ thể
-async function crawlSingleUrl(page, href, stateName) {
+async function crawlSingleUrl(browser, page, href, stateName) {
     const storeId = getStoreId(href);
-    const storeName = getStoreName(href);
-    
-    console.log(`\n🏪 Processing: ${storeName || 'Unknown'} (ID: ${storeId || 'N/A'}) - ${stateName}`);
+    const storeSlug = getStoreName(href);
+    const check = await checkStore(storeId, storeSlug);
+    if (check.data) {
+        console.log(`✅ Store ${storeSlug} đã tồn tại trong ${stateName}`);
+        return true;
+    }
+    console.log(`\n🏪 Processing: ${storeSlug || 'Unknown'} (ID: ${storeId || 'N/A'}) - ${stateName}`);
 
     try {
-        const userAgents = [
-            "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Mobile Safari/537.36",
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36",
-            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36",
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36",
-            "Mozilla/5.0 (X11; Ubuntu; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36",
-            "Mozilla/5.0 (Macintosh; Intel Mac OS X 12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36",
-            "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36",
-        ];
-        const randomUserAgent = userAgents[Math.floor(Math.random() * userAgents.length)];
-        await page.setUserAgent(randomUserAgent);
         await page.setExtraHTTPHeaders({
             'Accept-Language': 'en-US,en;q=0.9',
             'Referer': TARGET_URL,
@@ -174,8 +233,10 @@ async function crawlSingleUrl(page, href, stateName) {
             width: 1280,
             height: 1080
         });
-
-        // Thiết lập timeout dài hơn cho VPS
+        await page.setCookie({
+            name: 'mylang',
+            value: 'en',
+        });
         page.setDefaultTimeout(60000);
         page.setDefaultNavigationTimeout(60000);
 
@@ -183,8 +244,8 @@ async function crawlSingleUrl(page, href, stateName) {
             try {
                 console.log(`🔄 Attempt ${attempt}/3: Loading ${href}`);
                 await gotoWithRetry(page, href, 3);
-                await delay(8000); // Giảm delay để tăng tốc độ
-                
+                await delay(4000);
+
                 let dataObj = {};
 
 
@@ -200,34 +261,23 @@ async function crawlSingleUrl(page, href, stateName) {
                     }
                 }
 
-                if (!name || name.trim() === '') {
-                    console.log(`⚠️ Tên store rỗng, bỏ qua`);
-                    return false;
-                }
-
-                const check = await checkStore(storeId, name);
-                if (check.data) {
-                    console.log(`✅ Store ${storeName} đã tồn tại trong ${stateName}`);
-                    return true;
-                }
-
                 dataObj['name'] = name;
 
                 // Click contact info với error handling tốt hơn
                 try {
-                    await page.waitForSelector('#ad_vi > a.contact_info', { timeout: 10000 });
-                    await page.click('#ad_vi > a.contact_info');
+                    await page.waitForSelector('#ad_en > a.contact_info', { timeout: 10000 });
+                    await page.click('#ad_en > a.contact_info');
                     await delay(8000);
                 } catch (error) {
                     try {
-                        await page.waitForSelector('#ad_vi > a', { timeout: 10000 });
-                        await page.click('#ad_vi > a');
                         await delay(8000);
+                        await page.waitForSelector('#ad_en > a.contact_info', { timeout: 10000 });
+                        await page.click('#ad_en > a.contact_info');
                     } catch (error2) {
                         console.log(`⚠️ Không thể click contact info, tiếp tục với dữ liệu hiện tại`);
                     }
                 }
-                
+
                 await delay(5000);
 
                 // Lấy description với error handling
@@ -244,7 +294,7 @@ async function crawlSingleUrl(page, href, stateName) {
                 dataObj['description'] = description?.replace('[Translate to English]', '').trim() || 'No description available';
 
                 await delay(2000);
-                
+
                 // Lấy phone với error handling tốt hơn
                 let phoneSelector;
                 let phone = [];
@@ -265,11 +315,11 @@ async function crawlSingleUrl(page, href, stateName) {
                     try {
                         phone = await page.$$eval(phoneSelector, links =>
                             Array.from(new Set(
-                              links
-                                .map(link => link.textContent.trim())
-                                .filter(phone => phone !== '')
+                                links
+                                    .map(link => link.textContent.trim())
+                                    .filter(phone => phone !== '')
                             ))
-                          );
+                        );
                     } catch (error) {
                         console.log(`⚠️ Lỗi khi lấy số điện thoại:`, error.message);
                     }
@@ -279,29 +329,66 @@ async function crawlSingleUrl(page, href, stateName) {
                 const firstPhone = phone?.find(p => p !== '');
                 dataObj['business_phone'] = firstPhone ?? 'Contact via website';
 
-                // Lấy address với error handling
-                let addressText = '';
+                let checkIsBlock = '';
                 try {
-                    addressText = await page.$eval(
-                        '#ad_vi',
+                    checkIsBlock = await page.$eval(
+                        '#ad_en',
                         el => el.innerText.trim()
                     );
                 } catch (error) {
                     console.log(`⚠️ Không thể lấy địa chỉ:`, error.message);
-                    addressText = 'Address not available';
+                    await changeIP();
+                    try {
+                        console.log('🔄 Đóng browser hiện tại và tạo browser mới...');
+                        await browser.close();
+                        // Tạo browser mới với IP mới
+                        const newBrowserData = await createNewBrowser();
+                        browser = newBrowserData.browser;
+                        page = newBrowserData.page;
+                        console.log('✅ Browser mới đã được tạo thành công');
+                        // Trả về browser và page mới
+                        return { success: false, browser, page };
+                        
+                    } catch (browserError) {
+                        console.error('❌ Lỗi khi tạo browser mới:', browserError.message);
+                        throw new Error(`Browser restart failed: ${browserError.message}`);
+                    }
+                    continue
                 }
 
-                const parsed = parseAddressInfo(addressText);
-
-                dataObj['address'] = parsed.address || 'Address not available';
-                dataObj['city'] = parsed.city ?? 'N/A';
-                dataObj['state'] = stateName; 
-                dataObj['zipcode'] = parsed.zipcode ?? 'N/A';
+                const results = await page.$$eval('div[id^="id"]', divs => {
+                    return divs.map(div => {
+                      const titleDiv = div.querySelector('div.ellipsis > b');
+                      const title = titleDiv ? titleDiv.textContent.trim() : null;
+                  
+                      let nextDiv = null;
+                      const children = Array.from(div.children);
+                      for (let i = 0; i < children.length - 1; i++) {
+                        if (children[i].querySelector('b')) {
+                          nextDiv = children[i + 1];
+                          break;
+                        }
+                      }
+                  
+                      const nextContent = nextDiv ? nextDiv.textContent.trim() : null;
+                  
+                      return {
+                        title,
+                        nextContent
+                      };
+                    }).filter(item => item.title);
+                  });
+                
+                dataObj['address'] = results[0].nextContent || 'Address not available';
+                dataObj['city'] = 'N/A';
+                dataObj['state'] = stateName;
+                dataObj['zipcode'] = 'N/A';
                 dataObj['from_id'] = storeId || "7777777";
                 dataObj['email'] = 'nailjob.us@gmail.com';
+                dataObj['from_slug'] = storeSlug || "nailjob-us";
 
                 console.log(`✅ Data scraped (attempt ${attempt}) cho ${stateName}:`, dataObj);
-                
+
                 // Gọi API với error handling
                 try {
                     await createStore(dataObj);
@@ -310,10 +397,10 @@ async function crawlSingleUrl(page, href, stateName) {
                     console.error(`❌ API Error:`, apiError.message);
                     // Vẫn return true vì data đã được scrape thành công
                 }
-                
-                await delay(20000); // Giảm delay
 
-                return true;
+                await delay(10000); // Giảm delay
+
+                return { success: true };
 
             } catch (error) {
                 console.error(`❗ Attempt ${attempt} failed cho ${href} trong ${stateName}:`, error.message);
@@ -324,11 +411,11 @@ async function crawlSingleUrl(page, href, stateName) {
         }
 
         console.warn(`⛔ Skipping ${href} sau 3 lần thử thất bại trong ${stateName}.`);
-        return false;
-        
+        return { success: false };
+
     } catch (error) {
         console.error(`❌ Critical error in crawlSingleUrl:`, error.message);
-        return false;
+        return { success: false };
     } finally {
     }
 }
@@ -337,55 +424,61 @@ async function crawlSingleUrl(page, href, stateName) {
 // Hàm crawl tất cả URLs của một state
 async function crawlStateUrls(browser, page, stateCode, stateName) {
     console.log(`\n🌍 Bắt đầu crawl URLs cho bang: ${stateName} (${stateCode})`);
-    
+
     // Kiểm tra xem có file URLs đã lưu chưa
     let urls = loadUrlsFromFile(stateCode);
-    
+
     if (!urls) {
         console.log(`📥 Không tìm thấy file URLs cho ${stateCode}, sẽ lấy URLs mới...`);
         urls = await getAllUrlsForState(page, stateCode, stateName);
     }
-    
+
     if (urls.length === 0) {
         console.log(`⚠️ Không có URLs nào để crawl cho bang ${stateName}`);
         return;
     }
-    
+
     console.log(`🚀 Bắt đầu crawl ${urls.length} URLs cho ${stateName}`);
-    
+
     let successCount = 0;
     let failCount = 0;
     let consecutiveFailures = 0;
-    
+
     for (let i = 0; i < urls.length; i++) {
         const href = urls[i];
         console.log(`\n📊 Progress: ${i + 1}/${urls.length} (${Math.round((i + 1) / urls.length * 100)}%)`);
-        
-        const success = await crawlSingleUrl(page, href, stateName);
-        if (success) {
+
+        const result = await crawlSingleUrl(browser, page, href, stateName);
+        if (result && result.success) {
             successCount++;
-            consecutiveFailures = 0; // Reset counter
+            consecutiveFailures = 0;
         } else {
             failCount++;
             consecutiveFailures++;
-            
-            // Nếu fail liên tiếp 5 lần, dừng crawl
-            if (consecutiveFailures >= 5) {
-                console.log(`⚠️ Đã fail liên tiếp ${consecutiveFailures} lần, dừng crawl để tránh lỗi`);
-                break;
+            if (result.browser && result.page) {
+                browser = result.browser;
+                page = result.page;
+                await crawlSingleUrl(browser, page, href, stateName);
             }
         }
-        
-        // Delay giữa các URLs
+
+        if (consecutiveFailures >= 5) {
+            console.log(`⚠️ Đã fail liên tiếp ${consecutiveFailures} lần, dừng crawl để tránh lỗi`);
+            break;
+        }
+
         if (i < urls.length - 1) {
             await delay(5000);
         }
     }
-    
+
     console.log(`\n🎉 Hoàn thành crawl ${stateName}:`);
     console.log(`✅ Thành công: ${successCount}`);
     console.log(`❌ Thất bại: ${failCount}`);
     console.log(`📊 Tổng cộng: ${urls.length}`);
+    
+    // Trả về browser và page hiện tại để có thể sử dụng tiếp
+    return { browser, page };
 }
 
 
@@ -401,13 +494,14 @@ connect({
     },
     tf: true,
     args: [
-        '--disable-web-security', 
-        '--disable-features=IsolateOrigins,site-per-process', 
-        '--disable-webgl', 
+        '--disable-web-security',
+        `--proxy-server=${proxy.host}:${proxy.port}`,
+        '--disable-features=IsolateOrigins,site-per-process',
+        '--disable-webgl',
         '--disable-gpu',
         '--no-sandbox',
     ],
-    // proxy: proxies[0]
+    // proxy: proxy
 })
     .then(async response => {
         let { browser, page } = response;
@@ -417,9 +511,12 @@ connect({
             for (const [stateCode, stateName] of statesMap) {
                 stateIndex++;
                 console.log(`\n🚀 Bắt đầu crawl bang: ${stateName} (${stateCode}) - ${stateIndex}/${statesMap.size}`);
-                
+
                 try {
-                    
+                    await page.authenticate({
+                    username: proxy.username,
+                    password: proxy.password
+                    });
                     await page.goto(TARGET_URL, { waitUntil: 'networkidle2', timeout: 30000 });
                     await page.setUserAgent("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36")
                     await page.setExtraHTTPHeaders({
@@ -442,15 +539,20 @@ connect({
                     ];
                     const randomUserAgent = userAgents[Math.floor(Math.random() * userAgents.length)];
                     await page.setUserAgent(randomUserAgent);
-                    
-                    await crawlStateUrls(browser, page, stateCode, stateName);
-                    
+
+                    const result = await crawlStateUrls(browser, page, stateCode, stateName);
+                    // Cập nhật browser và page nếu có thay đổi
+                    if (result && result.browser && result.page) {
+                        browser = result.browser;
+                        page = result.page;
+                    }
+
                     console.log(`⏳ Đợi 30 giây trước khi chuyển sang bang tiếp theo...`);
                     await delay(30000);
-                    
+
                 } catch (error) {
                     console.error(`❌ Lỗi khi xử lý bang ${stateName}:`, error.message);
-                    
+
                     // Thử restart browser nếu có lỗi nghiêm trọng
                     try {
                         console.log(`🔄 Thử restart browser...`);
@@ -460,11 +562,11 @@ connect({
                     } catch (restartError) {
                         console.error(`❌ Không thể restart browser:`, restartError.message);
                     }
-                    
+
                     continue;
                 }
             }
-            
+
             console.log(`🎉 Đã hoàn thành crawl tất cả các bang!`);
         } catch (error) {
             console.error(`Error during scraping:`, error);
@@ -503,24 +605,24 @@ async function getAllUrlsFromAllPages(page) {
     const allUrls = [];
     let currentPage = 1;
     let hasMorePages = true;
-    let maxPages = 10; // Giới hạn tối đa 10 trang để tránh vòng lặp vô hạn
-    let consecutiveEmptyPages = 0; // Đếm số trang liên tiếp không có dữ liệu mới
-    
+    let maxPages = 10;
+    let consecutiveEmptyPages = 0;
+
     console.log(`🔄 Bắt đầu thu thập URLs từ tất cả trang...`);
-    
+
     while (hasMorePages && currentPage <= maxPages) {
         console.log(`🔄 Đang xử lý trang ${currentPage}`);
-        
+
         // Lấy URLs từ trang hiện tại
         const pageUrls = await getUrlsFromPage(page, currentPage);
-        
+
         // Kiểm tra xem có URLs mới không
         const newUrls = pageUrls.filter(url => !allUrls.includes(url));
-        
+
         if (newUrls.length === 0) {
             consecutiveEmptyPages++;
             console.log(`⚠️ Trang ${currentPage} không có URLs mới (${consecutiveEmptyPages} trang liên tiếp)`);
-            
+
             if (consecutiveEmptyPages >= 2) {
                 console.log(`⚠️ Đã có ${consecutiveEmptyPages} trang liên tiếp không có dữ liệu mới, dừng thu thập`);
                 hasMorePages = false;
@@ -531,10 +633,10 @@ async function getAllUrlsFromAllPages(page) {
             allUrls.push(...newUrls);
             console.log(`✅ Đã lấy được ${newUrls.length} URLs mới từ trang ${currentPage} (tổng: ${allUrls.length})`);
         }
-        
+
         // Kiểm tra xem có trang tiếp theo không
         const nextPageExists = await checkNextPageExists(page, currentPage);
-        
+
         if (nextPageExists) {
             // Chuyển đến trang tiếp theo
             const navigationSuccess = await navigateToNextPage(page, currentPage);
@@ -550,11 +652,11 @@ async function getAllUrlsFromAllPages(page) {
             hasMorePages = false;
         }
     }
-    
+
     if (currentPage > maxPages) {
         console.log(`⚠️ Đã đạt giới hạn ${maxPages} trang, dừng thu thập`);
     }
-    
+
     console.log(`🎉 Tổng cộng đã lấy được ${allUrls.length} URLs từ ${currentPage} trang`);
     return allUrls;
 }
@@ -582,11 +684,10 @@ async function checkNextPageExists(page, currentPage) {
 }
 
 
-// Hàm chuyển đến trang tiếp theo
 async function navigateToNextPage(page, currentPage) {
     try {
         console.log(`🔄 Đang chuyển từ trang ${currentPage} đến trang ${currentPage + 1}...`);
-        
+
         const nextUrl = await page.$eval('a[rel="next"]', el => el.href);
         console.log('Next page URL:', nextUrl);
         await page.goto(nextUrl, { waitUntil: 'networkidle2' });
@@ -595,7 +696,7 @@ async function navigateToNextPage(page, currentPage) {
             return true;
         }
         return false;
-        
+
     } catch (error) {
         console.log(`❌ Lỗi khi chuyển trang: ${error.message}`);
         return false;
