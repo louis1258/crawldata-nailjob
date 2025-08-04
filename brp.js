@@ -530,6 +530,28 @@ async function crawlStateUrls(browser, page, stateCode, stateName) {
         const href = urls[i];
         console.log(`\n📊 Progress: ${i + 1}/${urls.length} (${Math.round((i + 1) / urls.length * 100)}%)`);
 
+        // Kiểm tra browser và page còn hoạt động không
+        try {
+            if (!browser || !page || page.isClosed()) {
+                console.log('🔄 Browser/Page đã đóng, tạo mới...');
+                if (browser) {
+                    try {
+                        await browser.close();
+                    } catch (e) {
+                        console.log('Browser đã đóng rồi');
+                    }
+                }
+                const newBrowserData = await createNewBrowser();
+                browser = newBrowserData.browser;
+                page = newBrowserData.page;
+            }
+        } catch (error) {
+            console.log('🔄 Lỗi khi kiểm tra browser, tạo mới...', error.message);
+            const newBrowserData = await createNewBrowser();
+            browser = newBrowserData.browser;
+            page = newBrowserData.page;
+        }
+
         const result = await crawlSingleUrl(browser, page, href, stateName);
         if (result && result.success) {
             successCount++;
@@ -537,16 +559,28 @@ async function crawlStateUrls(browser, page, stateCode, stateName) {
         } else {
             failCount++;
             consecutiveFailures++;
-            if (result.browser && result.page) {
+            
+            // Nếu result có browser và page mới, cập nhật chúng
+            if (result && result.browser && result.page) {
                 browser = result.browser;
                 page = result.page;
-                await crawlSingleUrl(browser, page, href, stateName);
+                console.log('🔄 Đã cập nhật browser và page mới từ crawlSingleUrl');
             }
+            await crawlSingleUrl(browser, page, href, stateName);
         }
 
         if (consecutiveFailures >= 5) {
-            console.log(`⚠️ Đã fail liên tiếp ${consecutiveFailures} lần, dừng crawl để tránh lỗi`);
-            break;
+            console.log(`⚠️ Đã fail liên tiếp ${consecutiveFailures} lần, reset browser và tiếp tục...`);
+            try {
+                await browser.close();
+            } catch (e) {
+                console.log('Browser đã đóng rồi');
+            }
+            const newBrowserData = await createNewBrowser();
+            browser = newBrowserData.browser;
+            page = newBrowserData.page;
+            consecutiveFailures = 0; // Reset consecutive failures
+            continue;
         }
 
         if (i < urls.length - 1) {
