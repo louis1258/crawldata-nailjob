@@ -573,15 +573,11 @@ connect({
 
                 } catch (error) {
 
-                    try {
-                        console.log(`🔄 Thử restart browser...`);
-                        // Browser sẽ được restart tự động bởi puppeteer-real-browser
-                        await delay(10000);
-                    } catch (error) {
-                        console.error(`❌ Lỗi khi xử lý bang ${stateName}:`, error.message);
-                    }
+                    const newBrowserData = await createNewBrowser();
+                    browser = newBrowserData.browser;
+                    page = newBrowserData.page;
 
-                    continue; // Continue to next state
+                    await crawlStateUrls(browser, page, stateCode, stateName);
                 }
             }
 
