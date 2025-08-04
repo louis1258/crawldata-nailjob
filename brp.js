@@ -129,11 +129,31 @@ async function createNewBrowser() {
         height: 1080
     });
     
-    try {
-        await page.goto(TARGET_URL, { waitUntil: 'networkidle2', timeout: 30000 });
-        console.log('✅ New browser navigated to TARGET_URL successfully');
-    } catch (error) {
-        console.log('⚠️ Error navigating to TARGET_URL in new browser:', error.message);
+    // Navigate to TARGET_URL with retry mechanism
+    const maxRetries = 3;
+    let navigationSuccess = false;
+    
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+            console.log(`🔄 Navigating to TARGET_URL (attempt ${attempt}/${maxRetries})...`);
+            await page.goto(TARGET_URL, { waitUntil: 'networkidle2', timeout: 30000 });
+            console.log('✅ New browser navigated to TARGET_URL successfully');
+            navigationSuccess = true;
+            break;
+        } catch (error) {
+            console.log(`⚠️ Error navigating to TARGET_URL (attempt ${attempt}/${maxRetries}):`, error.message);
+            
+            if (attempt < maxRetries) {
+                console.log(`🔄 Retrying navigation... (${attempt + 1}/${maxRetries})`);
+                await delay(2000); // Wait 2 seconds before retry
+            } else {
+                console.log('❌ Failed to navigate to TARGET_URL after all retries');
+            }
+        }
+    }
+    
+    if (!navigationSuccess) {
+        console.log('⚠️ Warning: Browser created but navigation to TARGET_URL failed. Cookie operations may not work properly.');
     }
     
     return { browser, page };
