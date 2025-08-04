@@ -128,6 +128,10 @@ async function createNewBrowser() {
         width: 1280,
         height: 1080
     });
+    await page.setCookie({
+        name: 'mylang',
+        value: 'en',
+    });
     
     // Navigate to TARGET_URL with retry mechanism
     const maxRetries = 3;
