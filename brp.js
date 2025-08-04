@@ -310,7 +310,7 @@ async function crawlSingleUrl(browser, page, href, stateName) {
                     }
                 }
 
-                await delay(5000);
+                await delay(10000);
 
                 // Lấy description với error handling
                 let description = '';
@@ -327,38 +327,87 @@ async function crawlSingleUrl(browser, page, href, stateName) {
 
                 await delay(2000);
 
-                // Lấy phone với error handling tốt hơn
+                // Lấy phone với retry logic - thử tối đa 3 lần
                 let phoneSelector;
                 let phone = [];
-                try {
-                    await page.waitForSelector('a[href^="tel:"]', { timeout: 10000 });
-                    phoneSelector = 'a[href^="tel:"]';
-                } catch (error) {
-                    try {
-                        await page.waitForSelector('div[id^="id"] a[href^="tel:"]', { timeout: 10000 });
-                        phoneSelector = 'div[id^="id"] a[href^="tel:"]';
-                    } catch (error2) {
-                        console.log(`⚠️ Không tìm thấy số điện thoại`);
-                        phoneSelector = null;
-                    }
-                }
+                let firstPhone = null;
+                let retryCount = 0;
+                const maxRetries = 3;
 
-                if (phoneSelector) {
+                while (retryCount < maxRetries && !firstPhone) {
+                    retryCount++;
+                    console.log(`🔄 Lần thử ${retryCount}/${maxRetries} lấy số điện thoại...`);
+                    
+                    phoneSelector = null;
+                    phone = [];
+                    
                     try {
-                        phone = await page.$$eval(phoneSelector, links =>
-                            Array.from(new Set(
-                                links
-                                    .map(link => link.textContent.trim())
-                                    .filter(phone => phone !== '')
-                            ))
-                        );
+                        await page.waitForSelector('a[href^="tel:"]', { timeout: 10000 });
+                        phoneSelector = 'a[href^="tel:"]';
                     } catch (error) {
-                        console.log(`⚠️ Lỗi khi lấy số điện thoại:`, error.message);
+                        try {
+                            await page.waitForSelector('div[id^="id"] a[href^="tel:"]', { timeout: 10000 });
+                            phoneSelector = 'div[id^="id"] a[href^="tel:"]';
+                        } catch (error2) {
+                            console.log(`⚠️ Không tìm thấy số điện thoại (lần thử ${retryCount})`);
+                            phoneSelector = null;
+                        }
+                    }
+
+                    if (phoneSelector) {
+                        try {
+                            phone = await page.$$eval(phoneSelector, links =>
+                                Array.from(new Set(
+                                    links
+                                        .map(link => link.textContent.trim())
+                                        .filter(phone => phone !== '')
+                                ))
+                            );
+                        } catch (error) {
+                            console.log(`⚠️ Lỗi khi lấy số điện thoại (lần thử ${retryCount}):`, error.message);
+                        }
+                    }
+                
+                    console.log(`Phone numbers found (lần thử ${retryCount}):`, phone);
+                    firstPhone = phone?.find(p => p !== '');
+                    
+                    // Nếu không tìm thấy phone và chưa hết lần thử, đợi một chút rồi thử lại
+                    if (!firstPhone && retryCount < maxRetries) {
+                        console.log(`⏳ Không tìm thấy số điện thoại, đợi 3 giây trước khi thử lại...`);
+                        await delay(3000);
+                        // Refresh trang để thử lại
+                        try {
+                            await page.reload({ waitUntil: 'networkidle0', timeout: 30000 });
+                            await delay(2000);
+                        } catch (error) {
+                            console.log(`⚠️ Lỗi khi refresh trang:`, error.message);
+                        }
                     }
                 }
 
-                console.log('Phone numbers found:', phone);
-                const firstPhone = phone?.find(p => p !== '');
+                // Nếu sau 3 lần thử vẫn không có phone thì thay đổi IP và browser
+                if (!firstPhone) {
+                    console.log(`❌ Không thể lấy số điện thoại sau ${maxRetries} lần thử`);
+                    await changeIP();
+                    try {
+                        console.log('🔄 Đóng browser hiện tại và tạo browser mới...');
+                        await browser.close();
+                        // Tạo browser mới với IP mới
+                        const newBrowserData = await createNewBrowser();
+                        browser = newBrowserData.browser;
+                        page = newBrowserData.page;
+                        console.log('✅ Browser mới đã được tạo thành công');
+                        // Trả về browser và page mới
+                        return { success: false, browser, page };
+                        
+                    } catch (browserError) {
+                        console.error('❌ Lỗi khi tạo browser mới:', browserError.message);
+                        throw new Error(`Browser restart failed: ${browserError.message}`);
+                    }
+                    continue
+                }
+                
+                console.log(`✅ Thành công lấy số điện thoại sau ${retryCount} lần thử:`, firstPhone);
                 dataObj['business_phone'] = firstPhone ?? 'Contact via website';
 
                 let checkIsBlock = '';
