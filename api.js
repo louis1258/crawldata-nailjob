@@ -37,14 +37,12 @@ const agent = new https.Agent({
       const data = error?.response?.data;
       console.log('❌ Lỗi đổi IP:', data?.error || error.message);
   
-      // Check nếu có chuỗi báo đợi X giây
       const match = data?.error?.match(/sau (\d+) giây/);
       const waitSeconds = match ? parseInt(match[1]) : 300;
   
       console.log(`🔁 Sẽ thử lại sau ${waitSeconds} giây...`);
       await countdownDelay(waitSeconds);
   
-      // Retry
       return await changeIP();
     }
   }
@@ -180,41 +178,39 @@ const upload = async (imageName, fileBuffer) => {
 
 const STORE_URL = 'https://api.staging.nailjob.us/api/v1/technician/store/crawl';
 
-const getRandomImageFromNailFolder = () => {
-    const nailFolderPath = path.join(__dirname, 'Nail');
-    const files = fs.readdirSync(nailFolderPath);
+const getRandomImageUrl = () => {
+    const urlsFilePath = path.join(__dirname, 'nail_image_urls.txt');
     
-    const imageFiles = files.filter(file => {
-        const ext = path.extname(file).toLowerCase();
-        return ['.jpg', '.jpeg', '.png', '.webp'].includes(ext);
-    });
-    
-    if (imageFiles.length === 0) {
-        throw new Error('No image files found in Nail folder');
+    try {
+        const urlsContent = fs.readFileSync(urlsFilePath, 'utf8');
+        const urls = urlsContent.trim().split('\n').filter(url => url.trim() !== '');
+        
+        if (urls.length === 0) {
+            throw new Error('No image URLs found in nail_image_urls.txt');
+        }
+        
+        const randomIndex = Math.floor(Math.random() * urls.length);
+        const selectedUrl = urls[randomIndex].trim();
+        
+        console.log(`🎲 Selected random image URL: ${selectedUrl}`);
+        
+        return selectedUrl;
+        
+    } catch (error) {
+        if (error.code === 'ENOENT') {
+            throw new Error('File nail_image_urls.txt not found. Please run upload-all-images.js first to upload images.');
+        }
+        throw error;
     }
-    
-    // Select a random image
-    const randomIndex = Math.floor(Math.random() * imageFiles.length);
-    const selectedImage = imageFiles[randomIndex];
-    const imagePath = path.join(nailFolderPath, selectedImage);
-    
-    return {
-        imageName: selectedImage,
-        imageBuffer: fs.readFileSync(imagePath),
-        imagePath: imagePath  // Add image path for deletion
-    };
 };
 
 const createStore = async (store) => {
     try {
-        const { imageName, imageBuffer, imagePath } = getRandomImageFromNailFolder();
-        
-        console.log(`Uploading image: ${imageName}`);
-        const uploadResponse = await upload(imageName, imageBuffer);
+        const randomImageUrl = getRandomImageUrl();
         
         const storeWithImage = {
             ...store,
-            image: [uploadResponse.data]
+            image: [randomImageUrl]
         };
         
         console.log('Store payload with image:', storeWithImage);
@@ -238,6 +234,7 @@ const checkStore = async (from_id, from_slug) => {
     return response.data;
 };
 
+
 module.exports = { 
     upload, 
     createStore, 
@@ -245,5 +242,6 @@ module.exports = {
     login, 
     createAxiosInstance,
     getValidToken,
-    changeIP
+    changeIP,
+    getRandomImageUrl
 };
