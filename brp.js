@@ -461,7 +461,7 @@ async function crawlSingleUrl(browser, page, href, stateName) {
                   });
                 
                   console.log(results, 'results')
-                dataObj['address'] = results?.filter(item => item.nextContent!=null)[0].nextContent || stateName;
+                dataObj['address'] = results?.filter(item => item?.nextContent!=null)[0]?.nextContent || stateName;
                 dataObj['city'] = 'N/A';
                 dataObj['state'] = stateName;
                 dataObj['zipcode'] = 'N/A';
