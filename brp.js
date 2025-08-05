@@ -7,10 +7,6 @@ const fs = require('fs');
 const path = require('path');
 
 const statesMap = new Map([
-    ['AR', 'Arkansas'],
-    ['AZ', 'Arizona'],
-    ['AL', 'Alabama'],
-    ['AK', 'Alaska'],
     ['CA', 'California'],
     ['CO', 'Colorado'],
     ['CT', 'Connecticut'],
@@ -59,6 +55,10 @@ const statesMap = new Map([
     ['LA', 'Louisiana'],
     ['HI', 'Hawaii'],
     ['GA', 'Georgia'],
+    ['AR', 'Arkansas'],
+    ['AZ', 'Arizona'],
+    ['AL', 'Alabama'],
+    ['AK', 'Alaska'],
 ]);
 
 
@@ -303,8 +303,8 @@ async function crawlSingleUrl(browser, page, href, stateName) {
                 } catch (error) {
                     try {
                         await delay(8000);
-                        await page.waitForSelector('#ad_en > a.contact_info', { timeout: 10000 });
-                        await page.click('#ad_en > a.contact_info');
+                        await page.waitForSelector('div[id^="id"] > div > a.contact_info', { timeout: 10000 });
+                        await page.click('div[id^="id"] > div > a.contact_info');
                     } catch (error2) {
                         console.log(`⚠️ Không thể click contact info, tiếp tục với dữ liệu hiện tại`);
                     }
