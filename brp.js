@@ -7,31 +7,6 @@ const fs = require('fs');
 const path = require('path');
 
 const statesMap = new Map([
-    ['CA', 'California'],
-    ['CO', 'Colorado'],
-    ['CT', 'Connecticut'],
-    ['DE', 'Delaware'],
-    ['DC', 'Washington, Dc'],
-    ['FL', 'Florida'],
-    ['ID', 'Idaho'],
-    ['IN', 'Indiana'],
-    ['IA', 'Iowa'],
-    ['KS', 'Kansas'],
-    ['KY', 'Kentucky'],
-    ['ME', 'Maine'],
-    ['MD', 'Maryland'],
-    ['MA', 'Massachusetts'],
-    ['MI', 'Michigan'],
-    ['MN', 'Minnesota'],
-    ['MS', 'Mississippi'],
-    ['MO', 'Missouri'],
-    ['MT', 'Montana'],
-    ['NE', 'Nebraska'],
-    ['NV', 'Nevada'],
-    ['NH', 'New Hampshire'],
-    ['NJ', 'New Jersey'],
-    ['NM', 'New Mexico'],
-    ['NY', 'New York'],
     ['NC', 'North Carolina'],
     ['ND', 'North Dakota'],
     ['OH', 'Ohio'],
@@ -59,15 +34,39 @@ const statesMap = new Map([
     ['AZ', 'Arizona'],
     ['AL', 'Alabama'],
     ['AK', 'Alaska'],
+    ['CA', 'California'],
+    ['CO', 'Colorado'],
+    ['CT', 'Connecticut'],
+    ['DE', 'Delaware'],
+    ['DC', 'Washington, Dc'],
+    ['FL', 'Florida'],
+    ['ID', 'Idaho'],
+    ['IN', 'Indiana'],
+    ['IA', 'Iowa'],
+    ['KS', 'Kansas'],
+    ['KY', 'Kentucky'],
+    ['ME', 'Maine'],
+    ['MD', 'Maryland'],
+    ['MA', 'Massachusetts'],
+    ['MI', 'Michigan'],
+    ['MN', 'Minnesota'],
+    ['MS', 'Mississippi'],
+    ['MO', 'Missouri'],
+    ['MT', 'Montana'],
+    ['NE', 'Nebraska'],
+    ['NV', 'Nevada'],
+    ['NH', 'New Hampshire'],
+    ['NJ', 'New Jersey'],
+    ['NM', 'New Mexico'],
+    ['NY', 'New York'],
 ]);
-
 
 const proxy =
     {
-        host: '51.79.191.62',
-        port: '8631',
-        username: 'nghiaXju1S',
-        password: 'syqcGVUb'
+        host: '51.79.184.78',
+        port: '8723',
+        username: 'nghiag4Ykk',
+        password: 'CiiCV0sT'
     }
 
 function delay(ms) {
