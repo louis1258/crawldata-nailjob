@@ -7,17 +7,6 @@ const fs = require('fs');
 const path = require('path');
 
 const statesMap = new Map([
-    ['VT', 'Vermont'],
-    ['VA', 'Virginia'],
-    ['WA', 'Washington'],
-    ['WV', 'West Virginia'],
-    ['WI', 'Wisconsin'],
-    ['WY', 'Wyoming'],
-    ['PR', 'Puerto Rico'],
-    ['IL', 'Illinois'],
-    ['LA', 'Louisiana'],
-    ['HI', 'Hawaii'],
-    ['GA', 'Georgia'],
     ['NC', 'North Carolina'],
     ['ND', 'North Dakota'],
     ['OH', 'Ohio'],
@@ -42,6 +31,17 @@ const statesMap = new Map([
     ['FL', 'Florida'],
     ['ID', 'Idaho'],
     ['IN', 'Indiana'],
+    ['VT', 'Vermont'],
+    ['VA', 'Virginia'],
+    ['WA', 'Washington'],
+    ['WV', 'West Virginia'],
+    ['WI', 'Wisconsin'],
+    ['WY', 'Wyoming'],
+    ['PR', 'Puerto Rico'],
+    ['IL', 'Illinois'],
+    ['LA', 'Louisiana'],
+    ['HI', 'Hawaii'],
+    ['GA', 'Georgia'],
     ['IA', 'Iowa'],
     ['KS', 'Kansas'],
     ['KY', 'Kentucky'],
@@ -65,9 +65,9 @@ const statesMap = new Map([
 const proxy =
     {
         host: '51.79.184.78',
-        port: '8988',
-        username: 'nghiaqWWuF',
-        password: '2uv7R5if'
+        port: '8723',
+        username: 'nghiag4Ykk',
+        password: 'CiiCV0sT'
     }
 
 function delay(ms) {
