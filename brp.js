@@ -60,12 +60,13 @@ const statesMap = new Map([
     ['SC', 'South Carolina'],
     ['SD', 'South Dakota'],
 ]);
+
 const proxy =
     {
-        host: '51.79.191.62',
-        port: '8958',
-        username: 'nghiaDBDPQ',
-        password: 'dLotgGj2'
+        host: '51.79.184.78',
+        port: '8109',
+        username: 'nghiaNbZPe',
+        password: 'irccrvYn'
     }
 
 function delay(ms) {
