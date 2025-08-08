@@ -225,7 +225,7 @@ const loadUrlsFromFile = (stateCode) => {
 async function getAllUrlsForState(page, stateCode, stateName) {
     console.log(`\n🔍 Bắt đầu lấy URLs cho bang: ${stateName} (${stateCode})`);
 
-    const pageUrl = `${TARGET_URL}/index.php?state=${stateCode}&stype=&stype=2`;
+    const pageUrl = `${TARGET_URL}/index.php?state=${stateCode}&stype=&stype=1`;
     console.log(`🔗 URL: ${pageUrl}`);
 
     try {
@@ -467,8 +467,8 @@ async function crawlSingleUrl(browser, page, href, stateName) {
                 dataObj['from_id'] = storeId || "7777777";
                 dataObj['email'] = 'nailjob.us@gmail.com';
                 dataObj['from_slug'] = storeSlug || "nailjob-us";
-                // dataObj['has_job'] = true ;
-                dataObj['is_selling'] = true
+                dataObj['has_job'] = true ;
+                // dataObj['is_selling'] = true
                 
 
 
