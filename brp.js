@@ -7,22 +7,6 @@ const fs = require('fs');
 const path = require('path');
 
 const statesMap = new Map([
-    ['TN', 'Tennessee'],
-    ['TX', 'Texas'],
-    ['UT', 'Utah'],
-    ['AR', 'Arkansas'],
-    ['AZ', 'Arizona'],
-    ['AL', 'Alabama'],
-    ['AK', 'Alaska'],
-    ['CA', 'California'],
-    ['CO', 'Colorado'],
-    ['CT', 'Connecticut'],
-    ['DE', 'Delaware'],
-    ['DC', 'Washington, Dc'],
-    ['FL', 'Florida'],
-    ['ID', 'Idaho'],
-    ['IN', 'Indiana'],
-    ['VT', 'Vermont'],
     ['VA', 'Virginia'],
     ['WA', 'Washington'],
     ['WV', 'West Virginia'],
@@ -59,14 +43,30 @@ const statesMap = new Map([
     ['RI', 'Rhode Island'],
     ['SC', 'South Carolina'],
     ['SD', 'South Dakota'],
+    ['TN', 'Tennessee'],
+    ['TX', 'Texas'],
+    ['UT', 'Utah'],
+    ['AR', 'Arkansas'],
+    ['AZ', 'Arizona'],
+    ['AL', 'Alabama'],
+    ['AK', 'Alaska'],
+    ['CA', 'California'],
+    ['CO', 'Colorado'],
+    ['CT', 'Connecticut'],
+    ['DE', 'Delaware'],
+    ['DC', 'Washington, Dc'],
+    ['FL', 'Florida'],
+    ['ID', 'Idaho'],
+    ['IN', 'Indiana'],
+    ['VT', 'Vermont'],
 ]);
 
 const proxy =
     {
-        host: '51.79.184.78',
-        port: '8109',
-        username: 'nghiaNbZPe',
-        password: 'irccrvYn'
+        host: '103.15.95.127',
+        port: '8417',
+        username: 'nghiaR6E0W',
+        password: '6LplTJZh'
     }
 
 function delay(ms) {
@@ -225,7 +225,7 @@ const loadUrlsFromFile = (stateCode) => {
 async function getAllUrlsForState(page, stateCode, stateName) {
     console.log(`\n🔍 Bắt đầu lấy URLs cho bang: ${stateName} (${stateCode})`);
 
-    const pageUrl = `${TARGET_URL}/index.php?state=${stateCode}&stype=&stype=1`;
+    const pageUrl = `${TARGET_URL}/index.php?state=${stateCode}&stype=&stype=2`;
     console.log(`🔗 URL: ${pageUrl}`);
 
     try {
@@ -467,8 +467,8 @@ async function crawlSingleUrl(browser, page, href, stateName) {
                 dataObj['from_id'] = storeId || "7777777";
                 dataObj['email'] = 'nailjob.us@gmail.com';
                 dataObj['from_slug'] = storeSlug || "nailjob-us";
-                dataObj['has_job'] = true ;
-                // dataObj['is_selling'] = true
+                // dataObj['has_job'] = true ;
+                dataObj['is_selling'] = true
                 
 
 

@@ -27,7 +27,7 @@ const agent = new https.Agent({
 
   const changeIP = async () => {
     try {
-      const response = await axios.get('https://api.proxydancu.com/getip/us/7ecc6e20a0b2786253e947610ff94826dda241b9', {
+      const response = await axios.get('https://api.proxydancu.com/getip/us/8503a04d220ae70f53e3367d8f24887e81a17031', {
         httpsAgent: agent
       });
       console.log('🎉 Đổi IP thành công:', response.data);
