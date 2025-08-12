@@ -7,6 +7,10 @@ const fs = require('fs');
 const path = require('path');
 
 const statesMap = new Map([
+    ['FL', 'Florida'],
+    ['ID', 'Idaho'],
+    ['IN', 'Indiana'],
+    ['VT', 'Vermont'],
     ['VA', 'Virginia'],
     ['WA', 'Washington'],
     ['WV', 'West Virginia'],
@@ -55,18 +59,14 @@ const statesMap = new Map([
     ['CT', 'Connecticut'],
     ['DE', 'Delaware'],
     ['DC', 'Washington, Dc'],
-    ['FL', 'Florida'],
-    ['ID', 'Idaho'],
-    ['IN', 'Indiana'],
-    ['VT', 'Vermont'],
 ]);
 
 const proxy =
     {
-        host: '103.15.95.127',
-        port: '8417',
-        username: 'nghiaR6E0W',
-        password: '6LplTJZh'
+        host: '103.187.5.219',
+        port: '8059',
+        username: 'nghiajoBvp',
+        password: 'Rq754Wmo'
     }
 
 function delay(ms) {
