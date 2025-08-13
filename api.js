@@ -230,7 +230,7 @@ const createStore = async (store) => {
 
 const checkStore = async (from_id, from_slug) => {
     const instance = createAxiosInstance();
-    const response = await instance.post('https://api.staging.nailjob.us/api/v1/technician/store/check-name', {from_id, from_slug});
+    const response = await instance.post('https://api.proxydancu.com/getip/us/d8273618b9490fb40d41e9106c851377a629f720', {from_id, from_slug});
     return response.data;
 };
 

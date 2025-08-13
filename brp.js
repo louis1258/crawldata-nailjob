@@ -64,9 +64,9 @@ const statesMap = new Map([
 const proxy =
     {
         host: '103.187.5.219',
-        port: '8059',
-        username: 'nghiajoBvp',
-        password: 'Rq754Wmo'
+        port: '8337',
+        username: 'nghiayYetB',
+        password: 'F5ixDAvW'
     }
 
 function delay(ms) {
@@ -225,7 +225,7 @@ const loadUrlsFromFile = (stateCode) => {
 async function getAllUrlsForState(page, stateCode, stateName) {
     console.log(`\n🔍 Bắt đầu lấy URLs cho bang: ${stateName} (${stateCode})`);
 
-    const pageUrl = `${TARGET_URL}/index.php?state=${stateCode}&stype=&stype=2`;
+    const pageUrl = `${TARGET_URL}/index.php?state=${stateCode}&stype=&stype=1`;
     console.log(`🔗 URL: ${pageUrl}`);
 
     try {
@@ -251,7 +251,7 @@ async function crawlSingleUrl(browser, page, href, stateName) {
     const check = await checkStore(storeId, storeSlug);
     if (check.data) {
         console.log(`✅ Store ${storeSlug} đã tồn tại trong ${stateName}`);
-        return {success: true};
+        return {success: true, exist: true};
     }
     console.log(`\n🏪 Processing: ${storeSlug || 'Unknown'} (ID: ${storeId || 'N/A'}) - ${stateName}`);
 
@@ -485,7 +485,7 @@ async function crawlSingleUrl(browser, page, href, stateName) {
 
                 await delay(10000); // Giảm delay
 
-                return { success: true };
+                return { success: true, exist: false };
 
             } catch (error) {
                 console.error(`❗ Attempt ${attempt} failed cho ${href} trong ${stateName}:`, error.message);
@@ -511,12 +511,7 @@ async function crawlStateUrls(browser, page, stateCode, stateName) {
     console.log(`\n🌍 Bắt đầu crawl URLs cho bang: ${stateName} (${stateCode})`);
 
     // Kiểm tra xem có file URLs đã lưu chưa
-    let urls = loadUrlsFromFile(stateCode);
-
-    if (!urls) {
-        console.log(`📥 Không tìm thấy file URLs cho ${stateCode}, sẽ lấy URLs mới...`);
-        urls = await getAllUrlsForState(page, stateCode, stateName);
-    }
+    let  urls = await getAllUrlsForState(page, stateCode, stateName);
 
     if (urls.length === 0) {
         console.log(`⚠️ Không có URLs nào để crawl cho bang ${stateName}`);
@@ -566,12 +561,16 @@ async function crawlStateUrls(browser, page, stateCode, stateName) {
             
             const result = await crawlSingleUrl(browser, page, href, stateName);
             
-            if (result && result.success) {
+            if (result && result.success && result.exist) {
+                return false
+            } 
+            else if (result && result.success && !result.exist) {
                 linkSuccess = true;
                 successCount++;
                 consecutiveFailures = 0;
                 console.log(`✅ Thành công crawl link sau ${linkRetryCount} lần thử`);
-            } else {
+            }
+            else {
                 console.log(`❌ Lần thử ${linkRetryCount} thất bại cho link: ${href}`);
                 
                 // Nếu result có browser và page mới, cập nhật chúng
