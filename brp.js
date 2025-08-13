@@ -173,7 +173,7 @@ async function gotoWithRetry(page, url, maxRetries = 3) {
 
             if (errMsg.includes('net::ERR_PROXY_CONNECTION_FAILED')) {
                 console.log(`Detected proxy failure. Switching IP or proxy...`);
-                await changeIP();
+                // await changeIP();
             }
 
             retries += 1;
@@ -387,7 +387,7 @@ async function crawlSingleUrl(browser, page, href, stateName) {
                 // Nếu sau 3 lần thử vẫn không có phone thì thay đổi IP và browser
                 if (!firstPhone) {
                     console.log(`❌ Không thể lấy số điện thoại sau ${maxRetries} lần thử`);
-                    await changeIP();
+                    // await changeIP();
                     try {
                         console.log('🔄 Đóng browser hiện tại và tạo browser mới...');
                         await browser.close();
@@ -417,7 +417,7 @@ async function crawlSingleUrl(browser, page, href, stateName) {
                     );
                 } catch (error) {
                     console.log(`⚠️ Không thể lấy địa chỉ:`, error.message);
-                    await changeIP();
+                    // await changeIP();
                     try {
                         console.log('🔄 Đóng browser hiện tại và tạo browser mới...');
                         await browser.close();
