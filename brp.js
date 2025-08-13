@@ -467,8 +467,8 @@ async function crawlSingleUrl(browser, page, href, stateName) {
                 dataObj['from_id'] = storeId || "7777777";
                 dataObj['email'] = 'nailjob.us@gmail.com';
                 dataObj['from_slug'] = storeSlug || "nailjob-us";
-                // dataObj['has_job'] = true ;
-                dataObj['is_selling'] = true
+                dataObj['has_job'] = true ;
+                // dataObj['is_selling'] = true
                 
 
 
