@@ -92,7 +92,7 @@ async function createNewBrowser() {
             '--disable-features=TranslateUI',
             '--disable-ipc-flooding-protection',
             '--disable-web-security',
-            `--proxy-server=${proxy.host}:${proxy.port}`,
+            // `--proxy-server=${proxy.host}:${proxy.port}`,
             '--disable-features=IsolateOrigins,site-per-process',
             '--disable-webgl',
             '--disable-gpu',
@@ -103,10 +103,10 @@ async function createNewBrowser() {
     const { browser, page } = response;
     
     // Cấu hình page mới
-    await page.authenticate({
-        username: proxy.username,
-        password: proxy.password
-    });
+    // await page.authenticate({
+    //     username: proxy.username,
+    //     password: proxy.password
+    // });
     
     const userAgents = [
         "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Mobile Safari/537.36",
@@ -637,7 +637,7 @@ connect({
     tf: true,
     args: [
         '--disable-web-security',
-        `--proxy-server=${proxy.host}:${proxy.port}`,
+        // `--proxy-server=${proxy.host}:${proxy.port}`,
         '--disable-features=IsolateOrigins,site-per-process',
         '--disable-webgl',
         '--disable-gpu',
@@ -655,10 +655,10 @@ connect({
                 console.log(`\n🚀 Bắt đầu crawl bang: ${stateName} (${stateCode}) - ${stateIndex}/${statesMap.size}`);
 
                 try {
-                    await page.authenticate({
-                    username: proxy.username,
-                    password: proxy.password
-                    });
+                    // await page.authenticate({
+                    // username: proxy.username,
+                    // password: proxy.password
+                    // });
                     await page.goto(TARGET_URL, { waitUntil: 'networkidle2', timeout: 30000 });
                     await page.setUserAgent("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36")
                     await page.setExtraHTTPHeaders({
