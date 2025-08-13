@@ -524,7 +524,7 @@ async function crawlStateUrls(browser, page, stateCode, stateName) {
     let failCount = 0;
     let consecutiveFailures = 0;
 
-    for (let i = 0; i < urls.length; i++) {
+    for (let i = urls.length - 1; i >= 0; i--) {
         const href = urls[i];
         console.log(`\n📊 Progress: ${i + 1}/${urls.length} (${Math.round((i + 1) / urls.length * 100)}%)`);
 
