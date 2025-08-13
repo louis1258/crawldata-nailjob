@@ -1,8 +1,7 @@
 const { connect } = require('puppeteer-real-browser');
-const parseAddressInfo = require('./utils/parseAddressInfo');
-const { parseUrlInfo, getStoreId, getStoreName } = require('./utils/parseUrlInfo');
+const {  getStoreId, getStoreName } = require('./utils/parseUrlInfo');
 const TARGET_URL = 'https://baonail.com';
-const { createStore, checkStore, changeIP } = require('./api');
+const { createStore, checkStore } = require('./api');
 const fs = require('fs');
 const path = require('path');
 

@@ -48,11 +48,11 @@ const agent = new https.Agent({
   }
   
 
-const baseURL = 'https://api.staging.nailjob.us/api/v1/upload';
-const AUTH_URL = 'https://api.staging.nailjob.us/api/v1/auth/sign_in';
+const baseURL = 'https://api.nailjob.us/api/v1/upload';
+const AUTH_URL = 'https://api.nailjob.us/api/v1/auth/sign_in';
 
 // Token management
-let currentToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwaG9uZSI6MSwidXNlcklkIjoiNjgzZGJiYWE4YTk1NjA2NWVlZmExMzJkIiwiZW1haWwiOiJuZ2hpYUBnbWFpbC5jb20iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3NTQyMDY3MTQsImV4cCI6MTc1NDgxMTUxNH0.jpn2MlHwehUj7wCPX7r2bhX5FNkUPFMzuHmQL7dFlQA';
+let currentToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwaG9uZSI6MSwidXNlcklkIjoiNjgzZGJiYWE4YTk1NjA2NWVlZmExMzJkIiwiZW1haWwiOiJuZ2hpYUBnbWFpbC5jb20iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3NTUwODE0NTcsImV4cCI6MTc1NTE2Nzg1N30.890uJbyckc14yKyLAZkmMEDiOPIk9_ENqYAj6cyQufM';
 let refreshToken = null;
 
 // Login credentials 
@@ -176,7 +176,7 @@ const upload = async (imageName, fileBuffer) => {
     }
 };
 
-const STORE_URL = 'https://api.staging.nailjob.us/api/v1/technician/store/crawl';
+const STORE_URL = 'https://api.nailjob.us/api/v1/technician/store/crawl';
 
 const getRandomImageUrl = () => {
     const urlsFilePath = path.join(__dirname, 'nail_image_urls.txt');
@@ -230,7 +230,7 @@ const createStore = async (store) => {
 
 const checkStore = async (from_id, from_slug) => {
     const instance = createAxiosInstance();
-    const response = await instance.post('https://api.staging.nailjob.us/api/v1/technician/store/check-name', {from_id, from_slug});
+    const response = await instance.post('https://api.nailjob.us/api/v1/technician/store/check-name', {from_id, from_slug});
     return response.data;
 };
 
