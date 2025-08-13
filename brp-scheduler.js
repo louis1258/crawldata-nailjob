@@ -26,12 +26,7 @@ cron.schedule('0 0 * * *', runScripts, {
     timezone: "Asia/Ho_Chi_Minh"
 });
 
-if (process.argv.includes('--now')) {
-    console.log('🚀 Running immediately...');
-    runScripts();
-} else {
-    console.log('⏰ Waiting for next run at 00:00...');
-}
+runScripts();
 
 process.on('SIGINT', () => {
     console.log('\n🛑 Shutting down...');
